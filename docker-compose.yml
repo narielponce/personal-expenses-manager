@@ -1,39 +1,40 @@
+version: "3.9"
+
 services:
-  frontend:
-    build:
-      context: .
-      dockerfile: Dockerfile.frontend
-    container_name: personal_expense_manager_frontend
-    ports:
-      - "5173:5173"
-    volumes:
-      - ./frontend:/app
-    depends_on:
-      - backend
   backend:
-    build:
-      context: .
-      dockerfile: Dockerfile.backend
-    container_name: personal_expense_manager_backend
-    ports:
-      - "8000:8000"
-    volumes:
-      - ./backend:/app
-    environment:
-      - ENV=docker
-    depends_on:
-      - db
+    build: ./backend
+    container_name: finances_backend
+    restart: always
+    expose:
+      - "8000"
+    networks:
+      - club-manager_default
+
+  frontend:
+    build: ./frontend
+    container_name: finances_frontend
+    restart: always
+    expose:
+      - "80"
+    networks:
+      - club-manager_default
+
   db:
-    image: postgres:13
-    container_name: personal_expense_manager_db
+    image: postgres:15-alpine
+    container_name: finances_db
+    restart: always
     environment:
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: personal_expense_manager
-    ports:
-      - "5432:5432"
+      POSTGRES_USER: finances
+      POSTGRES_PASSWORD: strongpassword
+      POSTGRES_DB: finances
     volumes:
-      - postgres_data:/var/lib/postgresql/data/
+      - finances_pgdata:/var/lib/postgresql/data
+    networks:
+      - club-manager_default
 
 volumes:
-  postgres_data:
+  finances_pgdata:
+
+networks:
+  club-manager_default:
+    external: true
