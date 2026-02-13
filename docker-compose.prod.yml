@@ -11,6 +11,9 @@ services:
       - "8000"
     networks:
       - club-manager_default
+    environment:
+      ENV: docker
+      DATABASE_URL: postgresql://user:password@db:5432/finances
 
   frontend:
     build:
@@ -28,8 +31,8 @@ services:
     container_name: finances_db
     restart: always
     environment:
-      POSTGRES_USER: finances
-      POSTGRES_PASSWORD: strongpassword
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
       POSTGRES_DB: finances
     volumes:
       - finances_pgdata:/var/lib/postgresql/data

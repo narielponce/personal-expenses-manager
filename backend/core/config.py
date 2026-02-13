@@ -5,7 +5,7 @@ class Settings(BaseSettings):
     SECRET_KEY: str = "your-secret-key"  # TODO: Change this to a strong, randomly generated key in production
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
-    DATABASE_URL: str = "postgresql://user:password@db:5432/personal_expense_manager" # TODO: Configure in docker-compose
+    DATABASE_URL: str
 
     class Config:
         if os.getenv("ENV") != "docker":

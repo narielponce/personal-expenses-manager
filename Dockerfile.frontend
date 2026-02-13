@@ -1,14 +1,25 @@
-# Dockerfile.frontend
-FROM node:20-alpine
+# -------- Stage 1: Build --------
+FROM node:20-alpine AS build
 
 WORKDIR /app
 
-COPY ./frontend/package*.json ./
-
+# Copiar package.json primero para cache eficiente
+COPY frontend/package*.json ./
 RUN npm install
 
-COPY ./frontend .
+# Copiar el resto del frontend
+COPY frontend/ .
 
-EXPOSE 5173
+# Build de producción
+RUN npm run build
 
-CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
+# -------- Stage 2: Production --------
+FROM nginx:stable-alpine
+
+# Copiar archivos compilados
+COPY --from=build /app/dist /usr/share/nginx/html
+
+# Exponer puerto 80
+EXPOSE 80
+
+CMD ["nginx", "-g", "daemon off;"]
