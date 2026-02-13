@@ -2,7 +2,9 @@ version: "3.9"
 
 services:
   backend:
-    build: ./backend
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
     container_name: finances_backend
     restart: always
     expose:
@@ -11,7 +13,9 @@ services:
       - club-manager_default
 
   frontend:
-    build: ./frontend
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
     container_name: finances_frontend
     restart: always
     expose:
