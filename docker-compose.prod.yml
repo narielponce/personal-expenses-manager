@@ -9,8 +9,6 @@ services:
     restart: always
     expose:
       - "8000"
-    networks:
-      - club-manager_default
     environment:
       ENV: docker
       DATABASE_URL: postgresql://user:password@db:5432/finances
@@ -23,8 +21,8 @@ services:
     restart: always
     expose:
       - "80"
-    networks:
-      - club-manager_default
+    depends _on:
+      - backend
 
   db:
     image: postgres:15-alpine
@@ -36,12 +34,6 @@ services:
       POSTGRES_DB: finances
     volumes:
       - finances_pgdata:/var/lib/postgresql/data
-    networks:
-      - club-manager_default
 
 volumes:
   finances_pgdata:
-
-networks:
-  club-manager_default:
-    external: true
