@@ -21,7 +21,7 @@ services:
     restart: always
     expose:
       - "80"
-    depends _on:
+    depends_on:
       - backend
 
   db:
