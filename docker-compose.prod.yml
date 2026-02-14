@@ -9,6 +9,8 @@ services:
     restart: always
     expose:
       - "8000"
+    networks:
+      - expenses_network
     environment:
       ENV: docker
       DATABASE_URL: postgresql://user:password@db:5432/finances
@@ -21,6 +23,8 @@ services:
     restart: always
     expose:
       - "80"
+    networks:
+      - expenses_network
     depends_on:
       - backend
 
@@ -34,6 +38,13 @@ services:
       POSTGRES_DB: finances
     volumes:
       - finances_pgdata:/var/lib/postgresql/data
+    networks:
+      - expenses_network
 
 volumes:
   finances_pgdata:
+
+networks:
+  expenses_network:
+    name: expenses_network
+
