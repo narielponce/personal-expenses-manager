@@ -14,7 +14,7 @@ class Tenant(TenantBase):
     schema_name: str
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 # User Schemas
 class UserBase(BaseModel):
@@ -30,7 +30,7 @@ class User(UserBase):
     tenant_id: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 # Token Schemas
 class Token(BaseModel):
@@ -53,7 +53,7 @@ class Category(CategoryBase):
     tenant_id: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class CategoryUpdate(CategoryBase):
     name: Optional[str] = None
@@ -72,7 +72,7 @@ class Account(AccountBase):
     tenant_id: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class AccountUpdate(AccountBase):
     name: Optional[str] = None
@@ -90,7 +90,7 @@ class Recipient(RecipientBase):
     tenant_id: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class RecipientUpdate(RecipientBase):
     name: Optional[str] = None
@@ -119,7 +119,7 @@ class Expense(ExpenseBase):
     installment_amount: Optional[float] = None
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class ExpenseUpdate(BaseModel):
     description: Optional[str] = None

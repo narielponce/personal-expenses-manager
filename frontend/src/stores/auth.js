@@ -11,15 +11,11 @@ export const useAuthStore = defineStore('auth', {
     async login(email, password) {
       this.error = null
       try {
-        const formData = new FormData();
-        formData.append('username', email);
-        formData.append('password', password);
+        const params = new URLSearchParams();
+        params.append('username', email);
+        params.append('password', password);
 
-        const response = await apiClient.post('/token', formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data'
-          }
-        });
+        const response = await apiClient.post('/token', params);
 
         console.log('Login response:', response);
         this.token = response.data.access_token

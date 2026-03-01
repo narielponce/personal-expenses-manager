@@ -7,17 +7,29 @@ services:
       - ./frontend:/app
     ports:
       - "5173:5173"
+    depends_on:
+      backend:
+        condition: service_healthy
 
   backend:
     image: python:3.12
     working_dir: /app
-    command: sh -c "pip install -r requirements.txt && uvicorn main:app --host 0.0.0.0 --port 8000 --reload"
+    command: sh -c "pip install -r requirements.txt && alembic upgrade head && uvicorn main:app --host 0.0.0.0 --port 8000 --reload"
     volumes:
       - ./backend:/app
     ports:
-      - "8000:8000"
+      - "8002:8000"
     environment:
       DATABASE_URL: postgresql://user:password@db:5432/finances
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/docs"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    depends_on:
+      db:
+        condition: service_healthy
 
   db:
     image: postgres:15-alpine
@@ -29,6 +41,11 @@ services:
       - "5432:5432"
     volumes:
       - dev_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d finances"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
 volumes:
   dev_pgdata:
