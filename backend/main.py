@@ -1,7 +1,10 @@
 from fastapi import FastAPI
 from routers import auth, expenses, categories, accounts, recipients
 
-app = FastAPI()
+app = FastAPI(
+    title="Expenses API",
+    root_path="/api"
+)
 
 app.include_router(auth.router, tags=["auth"])
 app.include_router(expenses.router, tags=["expenses"])
