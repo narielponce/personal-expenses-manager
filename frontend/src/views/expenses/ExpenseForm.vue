@@ -1,118 +1,195 @@
 <template>
-  <div class="container mt-4">
-    <h2 class="mb-4">{{ isEditMode ? 'Editar Movimiento' : 'Registrar Movimiento' }}</h2>
-    <div v-if="error" class="alert alert-danger" role="alert">
-      Error: {{ error.message }}
+  <div class="container mt-2 mb-3 px-2" style="max-width: 500px;">
+    <!-- Header con Bienvenida -->
+    <div v-if="authStore.user" class="text-center mb-2">
+      <p class="text-muted small mb-0">Bienvenido, <span class="fw-bold text-dark">{{ authStore.user.email }}</span></p>
     </div>
-    <form @submit.prevent="handleSubmit">
-      <div class="mb-3">
-        <label for="date" class="form-label">Fecha</label>
-        <input type="date" class="form-control" id="date" v-model="expense.date" required />
+
+    <h2 class="h6 text-center mb-3 fw-bold text-dark">{{ isEditMode ? 'Editar Movimiento' : 'Registrar Movimiento' }}</h2>
+    
+    <div v-if="error" class="alert alert-danger py-1 px-2 small mb-2" role="alert">
+      {{ error.message }}
+    </div>
+
+    <!-- Botones de Entrada Rápida - Reducidos un poco -->
+    <div class="row g-2 mb-3">
+      <div class="col-6">
+        <button type="button" class="btn w-100 h-100 py-2 rounded-3 d-flex flex-column align-items-center justify-content-center text-white shadow-sm" style="background-color: #2E64FE; border: none; min-height: 80px;">
+          <i class="bi bi-mic-fill fs-3 mb-1"></i>
+          <span class="fw-semibold smaller">Grabar Gasto</span>
+        </button>
       </div>
-      <div class="mb-3">
-        <label for="movementType" class="form-label">Tipo de Movimiento</label>
-        <select class="form-select" id="movementType" v-model="expense.movement_type" required>
-          <option value="expense">Gasto</option>
-          <option value="income">Ingreso</option>
-        </select>
+      <div class="col-6">
+        <button type="button" class="btn w-100 h-100 py-2 rounded-3 d-flex flex-column align-items-center justify-content-center text-white shadow-sm" style="background-color: #388E3C; border: none; min-height: 80px;">
+          <i class="bi bi-camera-fill fs-3 mb-1"></i>
+          <span class="fw-semibold smaller text-wrap lh-sm">Foto Ticket</span>
+        </button>
       </div>
-      <div class="mb-3">
-        <label for="categoryId" class="form-label">Categoría</label>
-        <div class="input-group">
-          <select class="form-select" id="categoryId" v-model="expense.category_id">
-            <option :value="null">Seleccionar Categoría</option>
-            <option v-for="category in categories" :key="category.id" :value="category.id">{{ category.name }}</option>
+    </div>
+
+    <form @submit.prevent="handleSubmit" class="bg-white p-2 rounded-4 shadow-sm border">
+      <!-- Fila de Campos Esenciales - Más compacta -->
+      <div class="row g-2 mb-3 align-items-end">
+        <div class="col-4">
+          <label for="date" class="form-label smaller text-muted mb-0">Fecha</label>
+          <input type="date" class="form-control form-control-sm border-secondary-subtle px-1" id="date" v-model="expense.date" required />
+        </div>
+        <div class="col-4">
+          <label for="movementType" class="form-label smaller text-muted mb-0">Tipo</label>
+          <select class="form-select form-select-sm border-secondary-subtle px-1" id="movementType" v-model="expense.movement_type" required>
+            <option value="expense">Gasto</option>
+            <option value="income">Ingreso</option>
           </select>
-          <button class="btn btn-outline-secondary" type="button" data-bs-toggle="modal" data-bs-target="#categoryModal">
-            <i class="bi bi-plus-lg"></i> Agregar nuevo
-          </button>
         </div>
-      </div>
-      <div class="mb-3">
-        <label for="accountId" class="form-label">Cuenta</label>
-        <div class="input-group">
-          <select class="form-select" id="accountId" v-model="expense.account_id">
-            <option :value="null">Seleccionar Cuenta</option>
-            <option v-for="account in accounts" :key="account.id" :value="account.id">{{ account.name }}</option>
-          </select>
-          <button class="btn btn-outline-secondary" type="button" data-bs-toggle="modal" data-bs-target="#accountModal">
-            <i class="bi bi-plus-lg"></i> Agregar nuevo
-          </button>
+        <div class="col-4">
+          <label for="amount" class="form-label smaller text-muted mb-0">Monto</label>
+          <div class="input-group input-group-sm">
+            <span class="input-group-text bg-white border-end-0 border-secondary-subtle px-1 text-muted">$</span>
+            <input type="number" class="form-control border-start-0 ps-0 border-secondary-subtle" id="amount" v-model="expense.amount" required step="0.01" inputmode="decimal" placeholder="0" />
+          </div>
         </div>
-      </div>
-      <div v-if="selectedAccountIsCreditCard">
-        <div class="mb-3">
-          <label for="numInstallments" class="form-label">Número de Cuotas</label>
-          <input type="number" class="form-control" id="numInstallments" v-model="expense.num_installments" />
-        </div>
-      </div>
-      <div class="mb-3">
-        <label for="recipientId" class="form-label">Destinatario</label>
-        <div class="input-group">
-          <select class="form-select" id="recipientId" v-model="expense.recipient_id">
-            <option :value="null">Seleccionar Destinatario</option>
-            <option v-for="recipient in recipients" :key="recipient.id" :value="recipient.id">{{ recipient.name }}</option>
-          </select>
-          <button class="btn btn-outline-secondary" type="button" data-bs-toggle="modal" data-bs-target="#recipientModal">
-            <i class="bi bi-plus-lg"></i> Agregar nuevo
-          </button>
-        </div>
-      </div>
-      <div class="mb-3">
-        <label for="description" class="form-label">Descripción</label>
-        <input type="text" class="form-control" id="description" v-model="expense.description" required />
-      </div>
-      <div class="mb-3">
-        <label for="amount" class="form-label">Monto</label>
-        <input type="number" class="form-control" id="amount" v-model="expense.amount" required step="0.01" />
       </div>
 
-      <button type="submit" class="btn btn-primary" :disabled="loading">
+      <!-- Sección: Cuenta y Pago -->
+      <div class="mb-2 border border-secondary-subtle rounded-3 overflow-hidden">
+        <button type="button" class="btn btn-light w-100 text-start d-flex justify-content-between align-items-center py-1 px-2 bg-light border-0" @click="showAccount = !showAccount">
+            <span class="fw-semibold text-dark smaller">Cuenta y Pago</span>
+            <i class="bi bi-chevron-down text-muted smaller" v-if="showAccount"></i>
+            <i class="bi bi-chevron-right text-muted smaller" v-else></i>
+        </button>
+
+        <div v-show="showAccount" class="p-2 bg-white border-top border-secondary-subtle">
+          <div class="row g-2 mb-1 align-items-center">
+            <div class="col-4 text-end">
+              <label for="accountId" class="form-label mb-0 smaller text-muted text-truncate">Cuenta:</label>
+            </div>
+            <div class="col-8">
+              <div class="input-group input-group-sm">
+                <select class="form-select border-secondary-subtle py-0" id="accountId" v-model="expense.account_id">
+                  <option :value="null">Seleccionar...</option>
+                  <option v-for="account in accounts" :key="account.id" :value="account.id">{{ account.name }}</option>
+                </select>
+                <button class="btn btn-outline-secondary border-secondary-subtle py-0" type="button" data-bs-toggle="modal" data-bs-target="#accountModal">
+                  <i class="bi bi-plus"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div v-if="selectedAccountIsCreditCard" class="row g-2 align-items-center">
+            <div class="col-4 text-end">
+              <label for="numInstallments" class="form-label mb-0 smaller text-muted">Cuotas:</label>
+            </div>
+            <div class="col-8">
+              <select class="form-select form-select-sm border-secondary-subtle py-0" id="numInstallments" v-model="expense.num_installments">
+                <option v-for="n in 24" :key="n" :value="n">{{ n }} {{ n === 1 ? 'Cuota' : 'Cuotas' }}</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sección: Detalles Adicionales -->
+      <div class="mb-3 border border-secondary-subtle rounded-3 overflow-hidden">
+        <button type="button" class="btn btn-light w-100 text-start d-flex justify-content-between align-items-center py-1 px-2 bg-light border-0" @click="showDetails = !showDetails">
+            <span class="fw-semibold text-dark smaller">Detalles Adicionales</span>
+            <i class="bi bi-chevron-down text-muted smaller" v-if="showDetails"></i>
+            <i class="bi bi-chevron-right text-muted smaller" v-else></i>
+        </button>
+
+        <div v-show="showDetails" class="p-2 bg-white border-top border-secondary-subtle">
+          
+          <div class="row g-2 mb-1 align-items-center">
+            <div class="col-4 text-end">
+              <label for="categoryId" class="form-label mb-0 smaller text-muted text-truncate">Categoría:</label>
+            </div>
+            <div class="col-8">
+              <div class="input-group input-group-sm">
+                <select class="form-select border-secondary-subtle py-0" id="categoryId" v-model="expense.category_id">
+                  <option :value="null">Seleccionar...</option>
+                  <option v-for="category in categories" :key="category.id" :value="category.id">{{ category.name }}</option>
+                </select>
+                <button class="btn btn-outline-secondary border-secondary-subtle py-0" type="button" data-bs-toggle="modal" data-bs-target="#categoryModal">
+                  <i class="bi bi-plus"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="row g-2 mb-1 align-items-center">
+            <div class="col-4 text-end">
+              <label for="recipientId" class="form-label mb-0 smaller text-muted text-truncate">Destinatario:</label>
+            </div>
+            <div class="col-8">
+              <div class="input-group input-group-sm">
+                <select class="form-select border-secondary-subtle py-0" id="recipientId" v-model="expense.recipient_id">
+                  <option :value="null">Seleccionar...</option>
+                  <option v-for="recipient in recipients" :key="recipient.id" :value="recipient.id">{{ recipient.name }}</option>
+                </select>
+                <button class="btn btn-outline-secondary border-secondary-subtle py-0" type="button" data-bs-toggle="modal" data-bs-target="#recipientModal">
+                  <i class="bi bi-plus"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="row g-2 align-items-center">
+            <div class="col-4 text-end">
+              <label for="description" class="form-label mb-0 smaller text-muted">Descripción:</label>
+            </div>
+            <div class="col-8">
+              <input type="text" class="form-control form-control-sm border-secondary-subtle py-0" id="description" v-model="expense.description" placeholder="Ej: Super" required />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-lg w-100 fw-bold text-white mb-2 shadow-sm rounded-3 py-1" style="background-color: #E66A1D; border: none;" :disabled="loading">
         <span v-if="loading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-        {{ isEditMode ? 'Actualizar Movimiento' : 'Registrar Movimiento' }}
+        Guardar
       </button>
-      <router-link to="/expenses" class="btn btn-secondary ms-2">Cancelar</router-link>
+      <div class="text-center">
+          <router-link to="/expenses" class="text-decoration-none text-secondary smaller fw-medium">Cancelar</router-link>
+      </div>
     </form>
 
-    <!-- Category Modal -->
+    <!-- Modales -->
     <div class="modal fade" id="categoryModal" tabindex="-1" aria-labelledby="categoryModalLabel" aria-hidden="true">
       <div class="modal-dialog">
         <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title" id="categoryModalLabel">Crear Nueva Categoría</h5>
+          <div class="modal-header py-1 px-2">
+            <h5 class="modal-title h6" id="categoryModalLabel">Nueva Categoría</h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
-          <div class="modal-body">
+          <div class="modal-body p-2">
             <CategoryForm @category-created="handleCategoryCreated" :isModalCreate="true" />
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Account Modal -->
     <div class="modal fade" id="accountModal" tabindex="-1" aria-labelledby="accountModalLabel" aria-hidden="true">
       <div class="modal-dialog">
         <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title" id="accountModalLabel">Crear Nueva Cuenta</h5>
+          <div class="modal-header py-1 px-2">
+            <h5 class="modal-title h6" id="accountModalLabel">Nueva Cuenta</h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
-          <div class="modal-body">
+          <div class="modal-body p-2">
             <AccountForm @account-created="handleAccountCreated" :isModalCreate="true" />
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Recipient Modal -->
     <div class="modal fade" id="recipientModal" tabindex="-1" aria-labelledby="recipientModalLabel" aria-hidden="true">
       <div class="modal-dialog">
         <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title" id="recipientModalLabel">Crear Nuevo Destinatario</h5>
+          <div class="modal-header py-1 px-2">
+            <h5 class="modal-title h6" id="recipientModalLabel">Nuevo Destinatario</h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
-          <div class="modal-body">
+          <div class="modal-body p-2">
             <RecipientForm @recipient-created="handleRecipientCreated" :isModalCreate="true" />
           </div>
         </div>
@@ -128,13 +205,13 @@ import { useExpenseStore } from '../../stores/expense';
 import { useCategoryStore } from '../../stores/category';
 import { useAccountStore } from '../../stores/account';
 import { useRecipientStore } from '../../stores/recipient';
+import { useAuthStore } from '../../stores/auth'; // Store de Auth
 
-// Import the modal forms
+// Modales
 import CategoryForm from '../categories/CategoryForm.vue';
 import AccountForm from '../accounts/AccountForm.vue';
 import RecipientForm from '../recipients/RecipientForm.vue';
 
-// Bootstrap needs to be imported for modal to work
 import * as bootstrap from 'bootstrap';
 
 const route = useRoute();
@@ -143,13 +220,19 @@ const expenseStore = useExpenseStore();
 const categoryStore = useCategoryStore();
 const accountStore = useAccountStore();
 const recipientStore = useRecipientStore();
+const authStore = useAuthStore(); // Usar store de auth
 
 const isEditMode = computed(() => route.params.id !== undefined);
+
+// Estado de UI de los collapsibles (Abiertos por defecto para reducir taps)
+const showAccount = ref(true);
+const showDetails = ref(true);
+
 const expense = ref({
   description: '',
-  amount: 0.0,
+  amount: null,
   date: new Date().toISOString().split('T')[0],
-  application_date: new Date().toISOString().split('T')[0], // New field
+  application_date: new Date().toISOString().split('T')[0],
   movement_type: 'expense',
   category_id: null,
   account_id: null,
@@ -174,15 +257,20 @@ const selectedAccountIsCreditCard = computed(() => {
   return false;
 });
 
+// Auto-expandir cuenta si es tarjeta de crédito o si ya tiene algo seleccionado
+watch(() => expense.value.account_id, (newVal) => {
+  if (newVal) showAccount.value = true;
+});
+
 watch(selectedAccountIsCreditCard, (newVal) => {
   if (newVal) {
     expense.value.is_installment = true;
     if (!expense.value.num_installments) {
-      expense.value.num_installments = 1; // Default to 1 installment for credit card
+      expense.value.num_installments = 1; 
     }
+    showAccount.value = true;
   } else {
-    // If account changes from credit card to non-credit card, reset installment options
-    if (!isEditMode.value) { // Only reset if not in edit mode to avoid overwriting existing expense
+    if (!isEditMode.value) {
         expense.value.is_installment = false;
         expense.value.num_installments = null;
     }
@@ -190,6 +278,11 @@ watch(selectedAccountIsCreditCard, (newVal) => {
 });
 
 onMounted(async () => {
+  // Asegurar que el usuario esté cargado
+  if (!authStore.user) {
+    await authStore.fetchUser();
+  }
+  
   await categoryStore.fetchCategories();
   await accountStore.fetchAccounts();
   await recipientStore.fetchRecipients();
@@ -199,11 +292,15 @@ onMounted(async () => {
     const fetchedExpense = expenseStore.expenses.find(exp => exp.id === expenseId);
     if (fetchedExpense) {
       expense.value = { ...fetchedExpense };
+      showAccount.value = true;
+      showDetails.value = true;
     } else {
       await expenseStore.fetchExpenses();
       const foundExpense = expenseStore.expenses.find(exp => exp.id === expenseId);
       if (foundExpense) {
         expense.value = { ...foundExpense };
+        showAccount.value = true;
+        showDetails.value = true;
       } else {
         alert('Movimiento no encontrado. Redirigiendo a la lista.');
         router.push('/expenses');
@@ -226,86 +323,49 @@ const handleSubmit = async () => {
 };
 
 const handleCategoryCreated = async (newCategory) => {
-  console.log('Category Created:', newCategory);
-  await categoryStore.fetchCategories(); // Refresh categories
-  expense.value.category_id = newCategory.id; // Select the newly created category
-  const categoryModalElement = document.getElementById('categoryModal');
-  console.log('categoryModalElement:', categoryModalElement);
-  const categoryModal = bootstrap.Modal.getInstance(categoryModalElement) || new bootstrap.Modal(categoryModalElement);
-  console.log('categoryModal instance:', categoryModal);
-  if (categoryModal) {
-    categoryModal.hide();
-    console.log('Category Modal hide() called.');
-
-    // Explicitly remove backdrop and clean up body classes, with a small delay
-    setTimeout(() => {
-      const backdrops = document.querySelectorAll('.modal-backdrop');
-      backdrops.forEach(backdrop => {
-        backdrop.remove();
-        console.log('Removed modal-backdrop explicitly.');
-      });
-      document.body.classList.remove('modal-open');
-      document.body.style.overflow = '';
-      document.body.style.paddingRight = '';
-    }, 300);
-  } else {
-    console.warn('Could not get Bootstrap Modal instance for categoryModal.');
-  }
+  await categoryStore.fetchCategories(); 
+  expense.value.category_id = newCategory.id; 
+  closeModal('categoryModal');
 };
 
 const handleAccountCreated = async (newAccount) => {
-  console.log('Account Created:', newAccount);
-  await accountStore.fetchAccounts(); // Refresh accounts
-  expense.value.account_id = newAccount.id; // Select the newly created account
-  const accountModalElement = document.getElementById('accountModal');
-  console.log('accountModalElement:', accountModalElement);
-  const accountModal = bootstrap.Modal.getInstance(accountModalElement) || new bootstrap.Modal(accountModalElement);
-  console.log('accountModal instance:', accountModal);
-  if (accountModal) {
-    accountModal.hide();
-    console.log('Account Modal hide() called.');
-
-    // Explicitly remove backdrop and clean up body classes, with a small delay
-    setTimeout(() => {
-      const backdrops = document.querySelectorAll('.modal-backdrop');
-      backdrops.forEach(backdrop => {
-        backdrop.remove();
-        console.log('Removed modal-backdrop explicitly.');
-      });
-      document.body.classList.remove('modal-open');
-      document.body.style.overflow = '';
-      document.body.style.paddingRight = '';
-    }, 300);
-  } else {
-    console.warn('Could not get Bootstrap Modal instance for accountModal.');
-  }
+  await accountStore.fetchAccounts(); 
+  expense.value.account_id = newAccount.id; 
+  closeModal('accountModal');
 };
 
 const handleRecipientCreated = async (newRecipient) => {
-  console.log('Recipient Created:', newRecipient);
-  await recipientStore.fetchRecipients(); // Refresh recipients
-  expense.value.recipient_id = newRecipient.id; // Select the newly created recipient
-  const recipientModalElement = document.getElementById('recipientModal');
-  console.log('recipientModalElement:', recipientModalElement);
-  const recipientModal = bootstrap.Modal.getInstance(recipientModalElement) || new bootstrap.Modal(recipientModalElement);
-  console.log('recipientModal instance:', recipientModal);
-  if (recipientModal) {
-    recipientModal.hide();
-    console.log('Recipient Modal hide() called.');
+  await recipientStore.fetchRecipients(); 
+  expense.value.recipient_id = newRecipient.id; 
+  closeModal('recipientModal');
+};
 
-    // Explicitly remove backdrop and clean up body classes, with a small delay
+const closeModal = (modalId) => {
+  const modalElement = document.getElementById(modalId);
+  const modalInstance = bootstrap.Modal.getInstance(modalElement) || new bootstrap.Modal(modalElement);
+  if (modalInstance) {
+    modalInstance.hide();
     setTimeout(() => {
-      const backdrops = document.querySelectorAll('.modal-backdrop');
-      backdrops.forEach(backdrop => {
-        backdrop.remove();
-        console.log('Removed modal-backdrop explicitly.');
-      });
+      document.querySelectorAll('.modal-backdrop').forEach(b => b.remove());
       document.body.classList.remove('modal-open');
       document.body.style.overflow = '';
       document.body.style.paddingRight = '';
     }, 300);
-  } else {
-    console.warn('Could not get Bootstrap Modal instance for recipientModal.');
   }
 };
 </script>
+
+<style scoped>
+.smaller {
+  font-size: 0.75rem;
+}
+.form-control-sm, .form-select-sm, .input-group-text {
+  font-size: 0.85rem;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+}
+.btn-lg {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+</style>

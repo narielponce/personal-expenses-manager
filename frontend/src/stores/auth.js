@@ -20,12 +20,23 @@ export const useAuthStore = defineStore('auth', {
         console.log('Login response:', response);
         this.token = response.data.access_token
         localStorage.setItem('token', this.token)
-        // You might want to fetch user details here and store them
+        await this.fetchUser()
       } catch (error) {
         console.error('Login error:', error);
         this.error = 'Invalid credentials'
         this.token = ''
         localStorage.removeItem('token')
+        this.user = null
+      }
+    },
+    async fetchUser() {
+      if (!this.token) return
+      try {
+        const response = await apiClient.get('/users/me')
+        this.user = response.data
+      } catch (error) {
+        console.error('Fetch user error:', error);
+        this.logout()
       }
     },
     logout() {
