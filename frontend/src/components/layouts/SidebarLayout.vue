@@ -40,7 +40,7 @@
         </div>
       </nav>
 
-      <div class="container-fluid mt-5 pt-3">
+      <div class="container-fluid mt-4 pt-1">
         <slot></slot> <!-- Main content goes here -->
       </div>
     </div>
@@ -106,7 +106,7 @@ const handleLogoutAndDismiss = () => {
 }
 
 /* Adjust main content padding for fixed navbar */
-.container-fluid.mt-5.pt-3 {
-  padding-top: calc(3rem + 56px) !important; /* Adjust for navbar height (approx 56px) */
+.container-fluid.mt-4.pt-1 {
+  padding-top: calc(1rem + 56px) !important; /* Reducido de 3rem a 1rem + altura navbar */
 }
 </style>

@@ -1,11 +1,11 @@
 <template>
-  <div class="container mt-2 mb-3 px-2" style="max-width: 500px;">
+  <div class="container mt-0 mb-3 px-2" style="max-width: 500px;">
     <!-- Header con Bienvenida -->
-    <div v-if="authStore.user" class="text-center mb-2">
+    <div v-if="authStore.user" class="text-center mt-1 mb-1">
       <p class="text-muted small mb-0">Bienvenido, <span class="fw-bold text-dark">{{ authStore.user.email }}</span></p>
     </div>
 
-    <h2 class="h6 text-center mb-3 fw-bold text-dark">{{ isEditMode ? 'Editar Movimiento' : 'Registrar Movimiento' }}</h2>
+    <h2 class="h6 text-center mt-2 mb-2 fw-bold text-dark">{{ isEditMode ? 'Editar Movimiento' : 'Registrar Movimiento' }}</h2>
     
     <div v-if="error" class="alert alert-danger py-1 px-2 small mb-2" role="alert">
       {{ error.message }}
