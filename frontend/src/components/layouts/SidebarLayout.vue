@@ -107,6 +107,6 @@ const handleLogoutAndDismiss = () => {
 
 /* Adjust main content padding for fixed navbar */
 .container-fluid.mt-4.pt-1 {
-  padding-top: calc(1rem + 56px) !important; /* Reducido de 3rem a 1rem + altura navbar */
+  padding-top: calc(0.25rem + 56px) !important; /* Reducido al mínimo: 0.25rem + altura navbar */
 }
 </style>

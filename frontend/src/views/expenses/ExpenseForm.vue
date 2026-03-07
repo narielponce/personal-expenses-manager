@@ -1,18 +1,18 @@
 <template>
-  <div class="container mt-0 mb-3 px-2" style="max-width: 500px;">
-    <!-- Header con Bienvenida -->
-    <div v-if="authStore.user" class="text-center mt-1 mb-1">
+  <div class="container mt-0 mb-2 px-2" style="max-width: 500px;">
+    <!-- Header con Bienvenida - Margen Cero -->
+    <div v-if="authStore.user" class="text-center mt-0 mb-0">
       <p class="text-muted small mb-0">Bienvenido, <span class="fw-bold text-dark">{{ authStore.user.email }}</span></p>
     </div>
 
-    <h2 class="h6 text-center mt-2 mb-2 fw-bold text-dark">{{ isEditMode ? 'Editar Movimiento' : 'Registrar Movimiento' }}</h2>
+    <h2 class="h6 text-center mt-0 mb-1 fw-bold text-dark">{{ isEditMode ? 'Editar Movimiento' : 'Registrar Movimiento' }}</h2>
     
-    <div v-if="error" class="alert alert-danger py-1 px-2 small mb-2" role="alert">
+    <div v-if="error" class="alert alert-danger py-1 px-2 small mb-1" role="alert">
       {{ error.message }}
     </div>
 
-    <!-- Botones de Entrada Rápida - Reducidos un poco -->
-    <div class="row g-2 mb-3">
+    <!-- Botones de Entrada Rápida - Margen mb-2 -->
+    <div class="row g-2 mb-2">
       <div class="col-6">
         <button type="button" class="btn w-100 h-100 py-2 rounded-3 d-flex flex-column align-items-center justify-content-center text-white shadow-sm" style="background-color: #2E64FE; border: none; min-height: 80px;">
           <i class="bi bi-mic-fill fs-3 mb-1"></i>
@@ -28,8 +28,8 @@
     </div>
 
     <form @submit.prevent="handleSubmit" class="bg-white p-2 rounded-4 shadow-sm border">
-      <!-- Fila de Campos Esenciales - Más compacta -->
-      <div class="row g-2 mb-3 align-items-end">
+      <!-- Fila de Campos Esenciales - Margen mb-2 -->
+      <div class="row g-2 mb-2 align-items-end">
         <div class="col-4">
           <label for="date" class="form-label smaller text-muted mb-0">Fecha</label>
           <input type="date" class="form-control form-control-sm border-secondary-subtle px-1" id="date" v-model="expense.date" required />
@@ -50,8 +50,8 @@
         </div>
       </div>
 
-      <!-- Sección: Cuenta y Pago -->
-      <div class="mb-2 border border-secondary-subtle rounded-3 overflow-hidden">
+      <!-- Sección: Cuenta y Pago - Margen mb-1 -->
+      <div class="mb-1 border border-secondary-subtle rounded-3 overflow-hidden">
         <button type="button" class="btn btn-light w-100 text-start d-flex justify-content-between align-items-center py-1 px-2 bg-light border-0" @click="showAccount = !showAccount">
             <span class="fw-semibold text-dark smaller">Cuenta y Pago</span>
             <i class="bi bi-chevron-down text-muted smaller" v-if="showAccount"></i>
@@ -89,8 +89,8 @@
         </div>
       </div>
 
-      <!-- Sección: Detalles Adicionales -->
-      <div class="mb-3 border border-secondary-subtle rounded-3 overflow-hidden">
+      <!-- Sección: Detalles Adicionales - Margen mb-2 -->
+      <div class="mb-2 border border-secondary-subtle rounded-3 overflow-hidden">
         <button type="button" class="btn btn-light w-100 text-start d-flex justify-content-between align-items-center py-1 px-2 bg-light border-0" @click="showDetails = !showDetails">
             <span class="fw-semibold text-dark smaller">Detalles Adicionales</span>
             <i class="bi bi-chevron-down text-muted smaller" v-if="showDetails"></i>
@@ -144,7 +144,7 @@
         </div>
       </div>
 
-      <button type="submit" class="btn btn-lg w-100 fw-bold text-white mb-2 shadow-sm rounded-3 py-1" style="background-color: #E66A1D; border: none;" :disabled="loading">
+      <button type="submit" class="btn btn-lg w-100 fw-bold text-white mb-1 shadow-sm rounded-3 py-1" style="background-color: #E66A1D; border: none;" :disabled="loading">
         <span v-if="loading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
         Guardar
       </button>
