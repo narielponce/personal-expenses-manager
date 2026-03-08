@@ -1,49 +1,39 @@
 <template>
-  <div class="container mt-4">
-    <h2 class="mb-4">Categorías</h2>
-    <div v-if="loading" class="text-center">
+  <div class="container mt-2 mb-4 px-2" style="max-width: 600px;">
+    <h2 class="h5 text-center mb-3 fw-bold text-dark">Categorías</h2>
+    
+    <div v-if="loading" class="text-center my-4">
       <div class="spinner-border text-primary" role="status">
         <span class="visually-hidden">Cargando...</span>
       </div>
     </div>
-    <div v-else-if="error" class="alert alert-danger" role="alert">
+    <div v-else-if="error" class="alert alert-danger py-2 small" role="alert">
       Error: {{ error.message }}
     </div>
     <div v-else>
-      <router-link to="/categories/new" class="btn btn-primary mb-3">Agregar Nueva Categoría</router-link>
-      <!-- Desktop View (List) -->
-      <div class="d-none d-md-block">
-        <ul class="list-group">
-          <CategoryTreeItem
-            v-for="category in categoryTree"
-            :key="category.id"
-            :category="category"
-            :level="0"
-            @delete-category="handleDeleteCategory"
-          />
-        </ul>
+      <div class="d-grid mb-3">
+        <router-link to="/categories/new" class="btn btn-primary fw-semibold rounded-3 shadow-sm py-2">
+          <i class="bi bi-plus-lg me-1"></i> Agregar Nueva Categoría
+        </router-link>
       </div>
 
-      <!-- Mobile View (Cards) -->
-      <div class="d-block d-md-none">
-        <div class="row">
-          <div v-for="category in categoryTree" :key="category.id" class="col-12 mb-3">
-            <CategoryCardItem
-              :category="category"
-              :level="0"
-              @delete-category="handleDeleteCategory"
-            />
-          </div>
-        </div>
+      <!-- Unified View (Better for both but optimized for mobile feel) -->
+      <div class="category-tree">
+        <CategoryCardItem
+          v-for="category in categoryTree"
+          :key="category.id"
+          :category="category"
+          :level="0"
+          @delete-category="handleDeleteCategory"
+        />
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { onMounted, computed, ref } from 'vue';
+import { onMounted, computed } from 'vue';
 import { useCategoryStore } from '../../stores/category';
-import CategoryTreeItem from '../../components/CategoryTreeItem.vue';
 import CategoryCardItem from '../../components/CategoryCardItem.vue';
 
 const categoryStore = useCategoryStore();
@@ -51,7 +41,6 @@ const allCategories = computed(() => categoryStore.categories);
 const loading = computed(() => categoryStore.loading);
 const error = computed(() => categoryStore.error);
 
-// Function to build the hierarchical tree from a flat list
 const buildCategoryTree = (categories) => {
   const categoryMap = new Map();
   categories.forEach(cat => categoryMap.set(cat.id, { ...cat, children: [] }));
@@ -65,13 +54,11 @@ const buildCategoryTree = (categories) => {
       if (parent) {
         parent.children.push(categoryMap.get(cat.id));
       } else {
-        // If parent not found (e.g., deleted or invalid parent_id), treat as top-level
         tree.push(categoryMap.get(cat.id));
       }
     }
   });
 
-  // Sort top-level and children by name for consistent display
   const sortTree = (nodes) => {
     nodes.sort((a, b) => a.name.localeCompare(b.name));
     nodes.forEach(node => {
@@ -81,7 +68,6 @@ const buildCategoryTree = (categories) => {
     });
   };
   sortTree(tree);
-
   return tree;
 };
 
@@ -95,11 +81,16 @@ const handleDeleteCategory = async (id) => {
   if (confirm('¿Estás seguro de que quieres eliminar esta categoría y todas sus subcategorías?')) {
     try {
       await categoryStore.deleteCategory(id);
-      categoryStore.fetchCategories(); // Re-fetch categories after deletion
+      categoryStore.fetchCategories();
     } catch (err) {
       console.error('No se pudo eliminar la categoría:', err);
-      alert('No se pudo eliminar la categoría.');
     }
   }
 };
 </script>
+
+<style scoped>
+.category-tree {
+  margin-bottom: 2rem;
+}
+</style>

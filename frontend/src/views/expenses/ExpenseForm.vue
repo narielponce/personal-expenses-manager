@@ -1,35 +1,35 @@
 <template>
-  <div class="container mt-0 mb-2 px-2" style="max-width: 500px;">
-    <!-- Header con Bienvenida - Margen Cero -->
-    <div v-if="authStore.user" class="text-center mt-0 mb-0">
+  <div class="container mt-3 mb-4 px-2" style="max-width: 500px;">
+    <!-- Header con Bienvenida - Margen ajustado -->
+    <div v-if="authStore.user" class="text-center mt-2 mb-2">
       <p class="text-muted small mb-0">Bienvenido, <span class="fw-bold text-dark">{{ authStore.user.email }}</span></p>
     </div>
 
-    <h2 class="h6 text-center mt-0 mb-1 fw-bold text-dark">{{ isEditMode ? 'Editar Movimiento' : 'Registrar Movimiento' }}</h2>
+    <h2 class="h5 text-center mt-3 mb-4 fw-bold text-dark">{{ isEditMode ? 'Editar Movimiento' : 'Registrar Movimiento' }}</h2>
     
-    <div v-if="error" class="alert alert-danger py-1 px-2 small mb-1" role="alert">
+    <div v-if="error" class="alert alert-danger py-1 px-2 small mb-3" role="alert">
       {{ error.message }}
     </div>
 
-    <!-- Botones de Entrada Rápida - Reducidos un poco -->
-    <div class="row g-2 mb-3">
+    <!-- Botones de Entrada Rápida - Más grandes/cuadrados -->
+    <div class="row g-2 mb-4">
       <div class="col-6">
         <button 
           type="button" 
           @click="toggleRecording"
-          class="btn w-100 h-100 py-2 rounded-3 d-flex flex-column align-items-center justify-content-center text-white shadow-sm border-0 position-relative" 
-          :style="{ backgroundColor: isRecording ? '#d32f2f' : '#2E64FE', minHeight: '80px' }"
+          class="btn w-100 h-100 py-3 rounded-4 d-flex flex-column align-items-center justify-content-center text-white shadow-sm border-0 position-relative" 
+          :style="{ backgroundColor: isRecording ? '#d32f2f' : '#2E64FE', minHeight: '110px' }"
           :disabled="isProcessingVoice"
         >
           <div v-if="isRecording" class="recording-ripple"></div>
-          <i class="bi fs-3 mb-1" :class="isRecording ? 'bi-stop-fill' : 'bi-mic-fill'"></i>
-          <span class="fw-semibold smaller">{{ isRecording ? 'Detener' : (isProcessingVoice ? 'Procesando...' : 'Grabar Gasto') }}</span>
+          <i class="bi fs-1 mb-2" :class="isRecording ? 'bi-stop-fill' : 'bi-mic-fill'"></i>
+          <span class="fw-bold">{{ isRecording ? 'Detener' : (isProcessingVoice ? 'Procesando...' : 'Grabar Gasto') }}</span>
         </button>
       </div>
       <div class="col-6">
-        <button type="button" class="btn w-100 h-100 py-2 rounded-3 d-flex flex-column align-items-center justify-content-center text-white shadow-sm" style="background-color: #388E3C; border: none; min-height: 80px;">
-          <i class="bi bi-camera-fill fs-3 mb-1"></i>
-          <span class="fw-semibold smaller text-wrap lh-sm">Foto Ticket</span>
+        <button type="button" class="btn w-100 h-100 py-3 rounded-4 d-flex flex-column align-items-center justify-content-center text-white shadow-sm" style="background-color: #388E3C; border: none; minHeight: 110px;">
+          <i class="bi bi-camera-fill fs-1 mb-2"></i>
+          <span class="fw-bold text-wrap lh-sm">Foto Ticket</span>
         </button>
       </div>
     </div>
