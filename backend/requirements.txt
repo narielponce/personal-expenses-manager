@@ -9,3 +9,4 @@ alembic
 tenacity
 pydantic-settings
 python-dotenv
+google-generativeai

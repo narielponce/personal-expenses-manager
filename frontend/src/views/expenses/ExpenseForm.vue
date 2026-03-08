@@ -11,12 +11,19 @@
       {{ error.message }}
     </div>
 
-    <!-- Botones de Entrada Rápida - Margen mb-2 -->
-    <div class="row g-2 mb-2">
+    <!-- Botones de Entrada Rápida - Reducidos un poco -->
+    <div class="row g-2 mb-3">
       <div class="col-6">
-        <button type="button" class="btn w-100 h-100 py-2 rounded-3 d-flex flex-column align-items-center justify-content-center text-white shadow-sm" style="background-color: #2E64FE; border: none; min-height: 80px;">
-          <i class="bi bi-mic-fill fs-3 mb-1"></i>
-          <span class="fw-semibold smaller">Grabar Gasto</span>
+        <button 
+          type="button" 
+          @click="toggleRecording"
+          class="btn w-100 h-100 py-2 rounded-3 d-flex flex-column align-items-center justify-content-center text-white shadow-sm border-0 position-relative" 
+          :style="{ backgroundColor: isRecording ? '#d32f2f' : '#2E64FE', minHeight: '80px' }"
+          :disabled="isProcessingVoice"
+        >
+          <div v-if="isRecording" class="recording-ripple"></div>
+          <i class="bi fs-3 mb-1" :class="isRecording ? 'bi-stop-fill' : 'bi-mic-fill'"></i>
+          <span class="fw-semibold smaller">{{ isRecording ? 'Detener' : (isProcessingVoice ? 'Procesando...' : 'Grabar Gasto') }}</span>
         </button>
       </div>
       <div class="col-6">
@@ -213,6 +220,7 @@ import AccountForm from '../accounts/AccountForm.vue';
 import RecipientForm from '../recipients/RecipientForm.vue';
 
 import * as bootstrap from 'bootstrap';
+import apiClient from '../../api'; // Importar para llamar al backend
 
 const route = useRoute();
 const router = useRouter();
@@ -223,6 +231,11 @@ const recipientStore = useRecipientStore();
 const authStore = useAuthStore(); // Usar store de auth
 
 const isEditMode = computed(() => route.params.id !== undefined);
+
+// Estado de grabación de voz
+const isRecording = ref(false);
+const isProcessingVoice = ref(false);
+let recognition = null;
 
 // Estado de UI de los collapsibles (Abiertos por defecto para reducir taps)
 const showAccount = ref(true);
@@ -353,9 +366,86 @@ const closeModal = (modalId) => {
     }, 300);
   }
 };
+
+// --- Lógica de Voz ---
+const toggleRecording = () => {
+  if (isRecording.value) {
+    recognition.stop();
+    return;
+  }
+
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) {
+    alert("Lo siento, tu navegador no soporta reconocimiento de voz.");
+    return;
+  }
+
+  recognition = new SpeechRecognition();
+  recognition.lang = 'es-ES';
+  recognition.interimResults = false;
+  recognition.maxAlternatives = 1;
+
+  recognition.onstart = () => {
+    isRecording.value = true;
+  };
+
+  recognition.onresult = (event) => {
+    const text = event.results[0][0].transcript;
+    console.log("Texto detectado:", text);
+    processVoiceText(text);
+  };
+
+  recognition.onerror = (event) => {
+    console.error("Error en reconocimiento:", event.error);
+    isRecording.value = false;
+  };
+
+  recognition.onend = () => {
+    isRecording.value = false;
+  };
+
+  recognition.start();
+};
+
+const processVoiceText = async (text) => {
+  isProcessingVoice.value = true;
+  try {
+    const response = await apiClient.post('/process-voice', { text: text });
+    const data = response.data;
+    
+    // Autocompletar el formulario
+    if (data.amount) expense.value.amount = data.amount;
+    if (data.description) expense.value.description = data.description;
+    if (data.date) expense.value.date = data.date;
+    if (data.movement_type) expense.value.movement_type = data.movement_type;
+
+    // Expandir secciones si se llenaron datos
+    showDetails.value = true;
+    
+    console.log("Formulario actualizado por Gemini:", data);
+  } catch (err) {
+    console.error("Error al procesar voz con Gemini:", err);
+    alert("Hubo un error al procesar tu voz con la IA. Por favor, inténtalo de nuevo.");
+  } finally {
+    isProcessingVoice.value = false;
+  }
+};
 </script>
 
 <style scoped>
+.recording-ripple {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.3);
+  animation: ripple 1.5s infinite;
+}
+
+@keyframes ripple {
+  0% { transform: scale(0.9); opacity: 1; }
+  100% { transform: scale(1.1); opacity: 0; }
+}
+
 .smaller {
   font-size: 0.75rem;
 }
