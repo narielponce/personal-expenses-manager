@@ -413,14 +413,50 @@ const processVoiceText = async (text) => {
     const response = await apiClient.post('/process-voice', { text: text });
     const data = response.data;
     
-    // Autocompletar el formulario
+    // Autocompletar el formulario básico
     if (data.amount) expense.value.amount = data.amount;
     if (data.description) expense.value.description = data.description;
     if (data.date) expense.value.date = data.date;
     if (data.movement_type) expense.value.movement_type = data.movement_type;
 
+    // Lógica de coincidencia difusa para listas (Ignora mayúsculas y acentos)
+    const normalize = (str) => str ? str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") : "";
+
+    // 1. Asignar Cuenta
+    if (data.account_hint) {
+      const hint = normalize(data.account_hint);
+      const matchedAccount = accounts.value.find(acc => normalize(acc.name).includes(hint) || hint.includes(normalize(acc.name)));
+      if (matchedAccount) {
+        expense.value.account_id = matchedAccount.id;
+        // 2. Asignar Cuotas si la cuenta es de crédito
+        if (data.installments && matchedAccount.is_credit_card) {
+          expense.value.is_installment = true;
+          expense.value.num_installments = data.installments;
+        }
+      }
+    }
+
+    // 3. Asignar Destinatario
+    if (data.recipient_hint) {
+      const hint = normalize(data.recipient_hint);
+      const matchedRecipient = recipients.value.find(rec => normalize(rec.name).includes(hint) || hint.includes(normalize(rec.name)));
+      if (matchedRecipient) {
+        expense.value.recipient_id = matchedRecipient.id;
+      }
+    }
+
+    // 4. Asignar Categoría
+    if (data.category_hint) {
+      const hint = normalize(data.category_hint);
+      const matchedCategory = categories.value.find(cat => normalize(cat.name).includes(hint) || hint.includes(normalize(cat.name)));
+      if (matchedCategory) {
+        expense.value.category_id = matchedCategory.id;
+      }
+    }
+
     // Expandir secciones si se llenaron datos
     showDetails.value = true;
+    showAccount.value = true;
     
     console.log("Formulario actualizado por Gemini:", data);
   } catch (err) {

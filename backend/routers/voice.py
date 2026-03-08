@@ -31,13 +31,21 @@ async def process_voice_text(input_data: VoiceInput):
     3. 'movement_type' debe ser "expense" o "income".
     4. 'amount' debe ser un número (float o int).
     5. 'description' debe ser breve y descriptiva (máximo 50 caracteres).
+    6. Intenta inferir el 'account_hint' (ej. Visa, Mastercard, Efectivo, Banco). Si no se menciona, devuelve null.
+    7. Si se menciona pago en cuotas, devuelve el número en 'installments' (ej. 6). De lo contrario, null.
+    8. Intenta inferir el 'recipient_hint' (la persona, tienda o entidad a la que se paga o de quien se recibe). Si no, null.
+    9. Intenta inferir una 'category_hint' (ej. Supermercado, Ropa, Combustible, etc.). Si no, null.
 
     FORMATO JSON ESPERADO:
     {{
       "amount": number,
       "description": "string",
       "date": "YYYY-MM-DD",
-      "movement_type": "expense" | "income"
+      "movement_type": "expense" | "income",
+      "account_hint": "string" | null,
+      "installments": number | null,
+      "recipient_hint": "string" | null,
+      "category_hint": "string" | null
     }}
     """
 
