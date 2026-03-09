@@ -61,10 +61,10 @@
 </template>
 
 <script setup>
-import { ref, defineProps, defineEmits } from 'vue';
+import { ref } from 'vue';
 import { RouterLink } from 'vue-router';
 
-const props = defineProps({
+defineProps({
   category: {
     type: Object,
     required: true
@@ -75,7 +75,7 @@ const props = defineProps({
   }
 });
 
-const emit = defineEmits(['delete-category']);
+defineEmits(['delete-category']);
 
 const isExpanded = ref(false);
 

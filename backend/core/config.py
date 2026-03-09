@@ -4,7 +4,7 @@ import os
 class Settings(BaseSettings):
     SECRET_KEY: str = "your-secret-key"  # TODO: Change this to a strong, randomly generated key in production
     ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 10
     DATABASE_URL: str
     GEMINI_API_KEY: str = ""
 

@@ -72,7 +72,7 @@
                       </span>
                     </div>
                     <div class="d-flex align-items-center smaller text-muted mt-1 flex-wrap">
-                      <span class="me-2 text-nowrap"><i class="bi bi-calendar3 me-1"></i>{{ new Date(item.date).toLocaleDateString() }}</span>
+                      <span class="me-2 text-nowrap"><i class="bi bi-calendar3 me-1"></i>{{ formatDate(item.date) }}</span>
                       <span class="text-truncate" style="max-width: 150px;"><i class="bi bi-wallet2 me-1"></i>{{ item.account_name }}</span>
                     </div>
                   </div>
@@ -128,11 +128,25 @@ const formatCurrency = (value) => {
   return value.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' $';
 };
 
+const formatDate = (dateStr) => {
+  if (!dateStr) return '';
+  const pureDate = dateStr.includes('T') ? dateStr.split('T')[0] : dateStr;
+  const [year, month, day] = pureDate.split('-');
+  return new Date(year, month - 1, day).toLocaleDateString();
+};
+
 const cardSummary = computed(() => {
-  return expenseStore.expenses.map(expense => ({
-    ...expense,
-    account_name: accountStore.accounts.find(acc => acc.id === expense.account_id)?.name || 'N/A'
-  })).sort((a, b) => new Date(a.date) - new Date(b.date));
+  // Solo incluir gastos cuyas cuentas sean tarjetas de crédito
+  return expenseStore.expenses
+    .filter(expense => {
+      const account = accountStore.accounts.find(acc => acc.id === expense.account_id);
+      return account ? account.is_credit_card : false;
+    })
+    .map(expense => ({
+      ...expense,
+      account_name: accountStore.accounts.find(acc => acc.id === expense.account_id)?.name || 'N/A'
+    }))
+    .sort((a, b) => new Date(a.date) - new Date(b.date));
 });
 
 const totalAmount = computed(() => {
@@ -164,7 +178,8 @@ const fetchCardSummary = async () => {
   }
 };
 
-onMounted(() => {
+onMounted(async () => {
+  await accountStore.fetchAccounts();
   fetchCardSummary();
 });
 </script>

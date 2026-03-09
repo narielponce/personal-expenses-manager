@@ -25,6 +25,10 @@
           {{ authStore.error }}
         </div>
 
+        <div v-if="sessionExpiredMessage" class="alert alert-warning py-2 px-3 small text-center mb-3" role="alert">
+          {{ sessionExpiredMessage }}
+        </div>
+
         <hr class="text-muted opacity-25 mb-3">
         <div class="text-center">
           <a href="#" class="text-decoration-none text-secondary small">¿Olvidaste la contraseña?</a>
@@ -43,10 +47,17 @@ export default {
     return {
       email: '',
       password: '',
+      sessionExpiredMessage: '',
     };
   },
   computed: {
     ...mapStores(useAuthStore)
+  },
+  mounted() {
+    if (localStorage.getItem('sessionExpired') === 'true') {
+      this.sessionExpiredMessage = 'Sesión finalizada por inactividad.';
+      localStorage.removeItem('sessionExpired');
+    }
   },
   methods: {
     async handleLogin() {

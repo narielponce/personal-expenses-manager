@@ -95,7 +95,7 @@
                     </span>
                   </div>
                   <div class="d-flex align-items-center smaller text-muted mt-1 flex-wrap gap-x-2">
-                    <span class="text-nowrap"><i class="bi bi-calendar3 me-1"></i>{{ new Date(expense.date).toLocaleDateString() }}</span>
+                    <span class="text-nowrap"><i class="bi bi-calendar3 me-1"></i>{{ formatDate(expense.date) }}</span>
                     <span v-if="expense.category_name" class="ms-1 ms-sm-2 text-truncate" style="max-width: 120px;"><i class="bi bi-tag me-1"></i>{{ expense.category_name }}</span>
                     <span v-if="expense.account_name" class="ms-1 ms-sm-2 text-truncate" style="max-width: 120px;"><i class="bi bi-wallet2 me-1"></i>{{ expense.account_name }}</span>
                   </div>
@@ -180,6 +180,14 @@ const totalPages = computed(() => Math.ceil(totalExpensesCount.value / itemsPerP
 const formatCurrency = (value) => {
   if (value === null || value === undefined) return '';
   return value.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' $';
+};
+
+const formatDate = (dateStr) => {
+  if (!dateStr) return '';
+  // Si viene con T (ISO string), tomar solo la parte de la fecha
+  const pureDate = dateStr.includes('T') ? dateStr.split('T')[0] : dateStr;
+  const [year, month, day] = pureDate.split('-');
+  return new Date(year, month - 1, day).toLocaleDateString();
 };
 
 const fetchExpensesWithPagination = () => {

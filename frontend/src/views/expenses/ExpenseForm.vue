@@ -153,10 +153,11 @@
 
       <button type="submit" class="btn btn-lg w-100 fw-bold text-white mb-1 shadow-sm rounded-3 py-1" style="background-color: #E66A1D; border: none;" :disabled="loading">
         <span v-if="loading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-        Guardar
+        {{ isEditMode ? 'Actualizar' : 'Guardar' }}
       </button>
       <div class="text-center">
-          <router-link to="/expenses" class="text-decoration-none text-secondary smaller fw-medium">Cancelar</router-link>
+          <button v-if="!isEditMode" type="button" @click="resetForm" class="btn btn-link text-decoration-none text-secondary smaller fw-medium p-0">Limpiar Formulario</button>
+          <router-link v-else to="/expenses" class="text-decoration-none text-secondary smaller fw-medium">Cancelar</router-link>
       </div>
     </form>
 
@@ -244,8 +245,8 @@ const showDetails = ref(true);
 const expense = ref({
   description: '',
   amount: null,
-  date: new Date().toISOString().split('T')[0],
-  application_date: new Date().toISOString().split('T')[0],
+  date: new Date().toLocaleDateString('en-CA'), // Formato YYYY-MM-DD local
+  application_date: new Date().toLocaleDateString('en-CA'),
   movement_type: 'expense',
   category_id: null,
   account_id: null,
@@ -322,6 +323,22 @@ onMounted(async () => {
   }
 });
 
+const resetForm = () => {
+  expense.value = {
+    description: '',
+    amount: null,
+    date: new Date().toLocaleDateString('en-CA'),
+    application_date: new Date().toLocaleDateString('en-CA'),
+    movement_type: 'expense',
+    category_id: null,
+    account_id: null,
+    recipient_id: null,
+    is_installment: false,
+    num_installments: null,
+    installment_amount: null,
+  };
+};
+
 const handleSubmit = async () => {
   try {
     if (isEditMode.value) {
@@ -329,7 +346,12 @@ const handleSubmit = async () => {
     } else {
       await expenseStore.createExpense(expense.value);
     }
-    router.push('/expenses');
+    if (isEditMode.value) {
+      router.push('/expenses');
+    } else {
+      resetForm(); // Limpiar después de guardar si es carga rápida
+      alert("Movimiento guardado con éxito.");
+    }
   } catch (err) {
     console.error('No se pudo guardar el movimiento:', err);
   }
