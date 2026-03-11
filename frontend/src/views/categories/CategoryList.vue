@@ -1,6 +1,10 @@
 <template>
-  <div class="container mt-2 mb-4 px-2" style="max-width: 600px;">
-    <h2 class="h5 text-center mb-3 fw-bold text-dark">Categorías</h2>
+  <div class="summary-container mt-2 mb-4 px-2 px-md-3" style="max-width: 600px; margin-left: auto; margin-right: auto;">
+    <!-- Header estilo Home -->
+    <div class="user-header mb-3 mt-1 px-1">
+      <h5 class="fw-bold mb-0">Gestión de <span class="text-primary">Categorías</span></h5>
+      <p class="text-muted tiny mb-0">Organiza tus gastos por conceptos</p>
+    </div>
     
     <div v-if="loading" class="text-center my-4">
       <div class="spinner-border text-primary" role="status">
@@ -12,12 +16,12 @@
     </div>
     <div v-else>
       <div class="d-grid mb-3">
-        <router-link to="/categories/new" class="btn btn-primary fw-semibold rounded-3 shadow-sm py-2">
-          <i class="bi bi-plus-lg me-1"></i> Agregar Nueva Categoría
+        <router-link to="/categories/new" class="btn btn-primary fw-bold rounded-pill shadow-sm py-2">
+          <i class="bi bi-plus-lg me-1"></i> NUEVA CATEGORÍA
         </router-link>
       </div>
 
-      <!-- Unified View (Better for both but optimized for mobile feel) -->
+      <!-- Unified View estilo Home -->
       <div class="category-tree">
         <CategoryCardItem
           v-for="category in categoryTree"
@@ -90,7 +94,26 @@ const handleDeleteCategory = async (id) => {
 </script>
 
 <style scoped>
+.summary-container {
+  width: 100%;
+  overflow-x: hidden;
+}
+
+.user-header {
+  border-left: 4px solid #0d6efd;
+  padding-left: 12px;
+}
+
+.tiny {
+  font-size: 0.65rem;
+}
+
 .category-tree {
   margin-bottom: 2rem;
+}
+
+.btn-primary {
+  background-color: #0d6efd;
+  border: none;
 }
 </style>

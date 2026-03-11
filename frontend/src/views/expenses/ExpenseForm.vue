@@ -1,165 +1,153 @@
 <template>
-  <div class="container mt-3 mb-4 px-2" style="max-width: 500px;">
-    <!-- Header con Bienvenida - Margen ajustado -->
-    <div v-if="authStore.user" class="text-center mt-2 mb-2">
-      <p class="text-muted small mb-0">Bienvenido, <span class="fw-bold text-dark">{{ authStore.user.email }}</span></p>
+  <div class="container mt-2 mb-4 px-2" style="max-width: 500px;">
+    <!-- Header estilo Home -->
+    <div v-if="authStore.user" class="user-header mb-3 mt-1 px-1">
+      <h5 class="fw-bold mb-0">Registro <span class="text-primary">Manual</span></h5>
+      <p class="text-muted tiny mb-0">Completa los detalles del movimiento</p>
     </div>
 
-    <h2 class="h5 text-center mt-3 mb-4 fw-bold text-dark">{{ isEditMode ? 'Editar Movimiento' : 'Registrar Movimiento' }}</h2>
-    
     <div v-if="error" class="alert alert-danger py-1 px-2 small mb-3" role="alert">
       {{ error.message }}
     </div>
 
-    <!-- Botones de Entrada Rápida - Más grandes/cuadrados -->
-    <div class="row g-2 mb-4">
-      <div class="col-6">
-        <button 
-          type="button" 
-          @click="toggleRecording"
-          class="btn w-100 h-100 py-3 rounded-4 d-flex flex-column align-items-center justify-content-center text-white shadow-sm border-0 position-relative" 
-          :style="{ backgroundColor: isRecording ? '#d32f2f' : '#2E64FE', minHeight: '110px' }"
-          :disabled="isProcessingVoice"
-        >
-          <div v-if="isRecording" class="recording-ripple"></div>
-          <i class="bi fs-1 mb-2" :class="isRecording ? 'bi-stop-fill' : 'bi-mic-fill'"></i>
-          <span class="fw-bold">{{ isRecording ? 'Detener' : (isProcessingVoice ? 'Procesando...' : 'Grabar Gasto') }}</span>
-        </button>
-      </div>
-      <div class="col-6">
-        <button type="button" class="btn w-100 h-100 py-3 rounded-4 d-flex flex-column align-items-center justify-content-center text-white shadow-sm" style="background-color: #388E3C; border: none; minHeight: 110px;">
-          <i class="bi bi-camera-fill fs-1 mb-2"></i>
-          <span class="fw-bold text-wrap lh-sm">Foto Ticket</span>
-        </button>
-      </div>
-    </div>
-
-    <form @submit.prevent="handleSubmit" class="bg-white p-2 rounded-4 shadow-sm border">
-      <!-- Fila de Campos Esenciales - Margen mb-2 -->
-      <div class="row g-2 mb-2 align-items-end">
-        <div class="col-4">
-          <label for="date" class="form-label smaller text-muted mb-0">Fecha</label>
-          <input type="date" class="form-control form-control-sm border-secondary-subtle px-1" id="date" v-model="expense.date" required />
-        </div>
-        <div class="col-4">
-          <label for="movementType" class="form-label smaller text-muted mb-0">Tipo</label>
-          <select class="form-select form-select-sm border-secondary-subtle px-1" id="movementType" v-model="expense.movement_type" required>
-            <option value="expense">Gasto</option>
-            <option value="income">Ingreso</option>
-          </select>
-        </div>
-        <div class="col-4">
-          <label for="amount" class="form-label smaller text-muted mb-0">Monto</label>
-          <div class="input-group input-group-sm">
-            <span class="input-group-text bg-white border-end-0 border-secondary-subtle px-1 text-muted">$</span>
-            <input type="number" class="form-control border-start-0 ps-0 border-secondary-subtle" id="amount" v-model="expense.amount" required step="0.01" inputmode="decimal" placeholder="0" />
-          </div>
-        </div>
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-3">
+      <!-- Drag Handle estilo Home -->
+      <div class="d-flex justify-content-center pt-2 pb-1">
+        <div class="drag-handle"></div>
       </div>
 
-      <!-- Sección: Cuenta y Pago - Margen mb-1 -->
-      <div class="mb-1 border border-secondary-subtle rounded-3 overflow-hidden">
-        <button type="button" class="btn btn-light w-100 text-start d-flex justify-content-between align-items-center py-1 px-2 bg-light border-0" @click="showAccount = !showAccount">
-            <span class="fw-semibold text-dark smaller">Cuenta y Pago</span>
-            <i class="bi bi-chevron-down text-muted smaller" v-if="showAccount"></i>
-            <i class="bi bi-chevron-right text-muted smaller" v-else></i>
-        </button>
+      <div class="card-header bg-white border-0 pt-1 px-3">
+        <h6 class="mb-0 fw-bold smaller text-center">{{ isEditMode ? 'Editar Movimiento' : 'Nuevo Movimiento' }}</h6>
+      </div>
 
-        <div v-show="showAccount" class="p-2 bg-white border-top border-secondary-subtle">
-          <div class="row g-2 mb-1 align-items-center">
-            <div class="col-4 text-end">
-              <label for="accountId" class="form-label mb-0 smaller text-muted text-truncate">Cuenta:</label>
+      <div class="card-body p-3">
+        <form @submit.prevent="handleSubmit">
+          <!-- Fila de Campos Esenciales -->
+          <div class="row g-2 mb-3 align-items-end">
+            <div class="col-4">
+              <label for="date" class="form-label tiny text-muted fw-bold mb-1 text-uppercase">Fecha</label>
+              <input type="date" class="form-control form-control-sm border-0 bg-light rounded-3 px-1" id="date" v-model="expense.date" required />
             </div>
-            <div class="col-8">
-              <div class="input-group input-group-sm">
-                <select class="form-select border-secondary-subtle py-0" id="accountId" v-model="expense.account_id">
-                  <option :value="null">Seleccionar...</option>
-                  <option v-for="account in accounts" :key="account.id" :value="account.id">{{ account.name }}</option>
-                </select>
-                <button class="btn btn-outline-secondary border-secondary-subtle py-0" type="button" data-bs-toggle="modal" data-bs-target="#accountModal">
-                  <i class="bi bi-plus"></i>
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div v-if="selectedAccountIsCreditCard" class="row g-2 align-items-center">
-            <div class="col-4 text-end">
-              <label for="numInstallments" class="form-label mb-0 smaller text-muted">Cuotas:</label>
-            </div>
-            <div class="col-8">
-              <select class="form-select form-select-sm border-secondary-subtle py-0" id="numInstallments" v-model="expense.num_installments">
-                <option v-for="n in 24" :key="n" :value="n">{{ n }} {{ n === 1 ? 'Cuota' : 'Cuotas' }}</option>
+            <div class="col-4">
+              <label for="movementType" class="form-label tiny text-muted fw-bold mb-1 text-uppercase">Tipo</label>
+              <select class="form-select form-select-sm border-0 bg-light rounded-3 px-1" id="movementType" v-model="expense.movement_type" required>
+                <option value="expense">Gasto</option>
+                <option value="income">Ingreso</option>
               </select>
             </div>
+            <div class="col-4">
+              <label for="amount" class="form-label tiny text-muted fw-bold mb-1 text-uppercase">Monto</label>
+              <div class="input-group input-group-sm">
+                <span class="input-group-text bg-light border-0 rounded-start-3 px-1 text-muted">$</span>
+                <input type="number" class="form-control border-0 bg-light rounded-end-3 ps-0" id="amount" v-model="expense.amount" required step="0.01" inputmode="decimal" placeholder="0" />
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
 
-      <!-- Sección: Detalles Adicionales - Margen mb-2 -->
-      <div class="mb-2 border border-secondary-subtle rounded-3 overflow-hidden">
-        <button type="button" class="btn btn-light w-100 text-start d-flex justify-content-between align-items-center py-1 px-2 bg-light border-0" @click="showDetails = !showDetails">
-            <span class="fw-semibold text-dark smaller">Detalles Adicionales</span>
-            <i class="bi bi-chevron-down text-muted smaller" v-if="showDetails"></i>
-            <i class="bi bi-chevron-right text-muted smaller" v-else></i>
-        </button>
+          <!-- Sección: Cuenta y Pago -->
+          <div class="mb-2 bg-light rounded-4 overflow-hidden">
+            <button type="button" class="btn btn-light w-100 text-start d-flex justify-content-between align-items-center py-2 px-3 bg-transparent border-0" @click="showAccount = !showAccount">
+                <span class="fw-bold text-dark smaller">Cuenta y Pago</span>
+                <i class="bi text-muted smaller" :class="showAccount ? 'bi-chevron-down' : 'bi-chevron-right'"></i>
+            </button>
 
-        <div v-show="showDetails" class="p-2 bg-white border-top border-secondary-subtle">
+            <div v-show="showAccount" class="p-3 pt-0">
+              <div class="row g-2 mb-2 align-items-center">
+                <div class="col-4">
+                  <label for="accountId" class="form-label mb-0 tiny text-muted fw-bold text-uppercase">Cuenta:</label>
+                </div>
+                <div class="col-8">
+                  <div class="input-group input-group-sm">
+                    <select class="form-select border-0 bg-white rounded-start-3 py-1" id="accountId" v-model="expense.account_id">
+                      <option :value="null">Seleccionar...</option>
+                      <option v-for="account in accounts" :key="account.id" :value="account.id">{{ account.name }}</option>
+                    </select>
+                    <button class="btn btn-white border-0 bg-white rounded-end-3 py-1" type="button" data-bs-toggle="modal" data-bs-target="#accountModal">
+                      <i class="bi bi-plus-circle text-primary"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div v-if="selectedAccountIsCreditCard" class="row g-2 align-items-center">
+                <div class="col-4">
+                  <label for="numInstallments" class="form-label mb-0 tiny text-muted fw-bold text-uppercase">Cuotas:</label>
+                </div>
+                <div class="col-8">
+                  <select class="form-select form-select-sm border-0 bg-white rounded-3 py-1" id="numInstallments" v-model="expense.num_installments">
+                    <option v-for="n in 24" :key="n" :value="n">{{ n }} {{ n === 1 ? 'Cuota' : 'Cuotas' }}</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Sección: Detalles Adicionales -->
+          <div class="mb-3 bg-light rounded-4 overflow-hidden">
+            <button type="button" class="btn btn-light w-100 text-start d-flex justify-content-between align-items-center py-2 px-3 bg-transparent border-0" @click="showDetails = !showDetails">
+                <span class="fw-bold text-dark smaller">Detalles</span>
+                <i class="bi text-muted smaller" :class="showDetails ? 'bi-chevron-down' : 'bi-chevron-right'"></i>
+            </button>
+
+            <div v-show="showDetails" class="p-3 pt-0">
+              
+              <div class="row g-2 mb-2 align-items-center">
+                <div class="col-4">
+                  <label for="categoryId" class="form-label mb-0 tiny text-muted fw-bold text-uppercase">Categoría:</label>
+                </div>
+                <div class="col-8">
+                  <div class="input-group input-group-sm">
+                    <select class="form-select border-0 bg-white rounded-start-3 py-1" id="categoryId" v-model="expense.category_id">
+                      <option :value="null">Seleccionar...</option>
+                      <option v-for="category in categories" :key="category.id" :value="category.id">{{ category.name }}</option>
+                    </select>
+                    <button class="btn btn-white border-0 bg-white rounded-end-3 py-1" type="button" data-bs-toggle="modal" data-bs-target="#categoryModal">
+                      <i class="bi bi-plus-circle text-primary"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="row g-2 mb-2 align-items-center">
+                <div class="col-4">
+                  <label for="recipientId" class="form-label mb-0 tiny text-muted fw-bold text-uppercase">Para:</label>
+                </div>
+                <div class="col-8">
+                  <div class="input-group input-group-sm">
+                    <select class="form-select border-0 bg-white rounded-start-3 py-1" id="recipientId" v-model="expense.recipient_id">
+                      <option :value="null">Seleccionar...</option>
+                      <option v-for="recipient in recipients" :key="recipient.id" :value="recipient.id">{{ recipient.name }}</option>
+                    </select>
+                    <button class="btn btn-white border-0 bg-white rounded-end-3 py-1" type="button" data-bs-toggle="modal" data-bs-target="#recipientModal">
+                      <i class="bi bi-plus-circle text-primary"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="row g-2 align-items-center">
+                <div class="col-4">
+                  <label for="description" class="form-label mb-0 tiny text-muted fw-bold text-uppercase">Detalle:</label>
+                </div>
+                <div class="col-8">
+                  <input type="text" class="form-control form-control-sm border-0 bg-white rounded-3 py-1" id="description" v-model="expense.description" placeholder="Ej: Compra super" required />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary w-100 fw-bold rounded-pill py-2 shadow-sm mb-2" :disabled="loading">
+            <span v-if="loading" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+            {{ isEditMode ? 'Actualizar Movimiento' : 'Guardar Movimiento' }}
+          </button>
           
-          <div class="row g-2 mb-1 align-items-center">
-            <div class="col-4 text-end">
-              <label for="categoryId" class="form-label mb-0 smaller text-muted text-truncate">Categoría:</label>
-            </div>
-            <div class="col-8">
-              <div class="input-group input-group-sm">
-                <select class="form-select border-secondary-subtle py-0" id="categoryId" v-model="expense.category_id">
-                  <option :value="null">Seleccionar...</option>
-                  <option v-for="category in categories" :key="category.id" :value="category.id">{{ category.name }}</option>
-                </select>
-                <button class="btn btn-outline-secondary border-secondary-subtle py-0" type="button" data-bs-toggle="modal" data-bs-target="#categoryModal">
-                  <i class="bi bi-plus"></i>
-                </button>
-              </div>
-            </div>
+          <div class="text-center">
+              <button v-if="!isEditMode" type="button" @click="resetForm" class="btn btn-link text-decoration-none text-muted tiny fw-bold p-0">LIMPIAR TODO</button>
+              <router-link v-else to="/expenses" class="text-decoration-none text-muted tiny fw-bold">CANCELAR</router-link>
           </div>
-
-          <div class="row g-2 mb-1 align-items-center">
-            <div class="col-4 text-end">
-              <label for="recipientId" class="form-label mb-0 smaller text-muted text-truncate">Destinatario:</label>
-            </div>
-            <div class="col-8">
-              <div class="input-group input-group-sm">
-                <select class="form-select border-secondary-subtle py-0" id="recipientId" v-model="expense.recipient_id">
-                  <option :value="null">Seleccionar...</option>
-                  <option v-for="recipient in recipients" :key="recipient.id" :value="recipient.id">{{ recipient.name }}</option>
-                </select>
-                <button class="btn btn-outline-secondary border-secondary-subtle py-0" type="button" data-bs-toggle="modal" data-bs-target="#recipientModal">
-                  <i class="bi bi-plus"></i>
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div class="row g-2 align-items-center">
-            <div class="col-4 text-end">
-              <label for="description" class="form-label mb-0 smaller text-muted">Descripción:</label>
-            </div>
-            <div class="col-8">
-              <input type="text" class="form-control form-control-sm border-secondary-subtle py-0" id="description" v-model="expense.description" placeholder="Ej: Super" required />
-            </div>
-          </div>
-        </div>
+        </form>
       </div>
-
-      <button type="submit" class="btn btn-lg w-100 fw-bold text-white mb-1 shadow-sm rounded-3 py-1" style="background-color: #E66A1D; border: none;" :disabled="loading">
-        <span v-if="loading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-        {{ isEditMode ? 'Actualizar' : 'Guardar' }}
-      </button>
-      <div class="text-center">
-          <button v-if="!isEditMode" type="button" @click="resetForm" class="btn btn-link text-decoration-none text-secondary smaller fw-medium p-0">Limpiar Formulario</button>
-          <router-link v-else to="/expenses" class="text-decoration-none text-secondary smaller fw-medium">Cancelar</router-link>
-      </div>
-    </form>
+    </div>
 
     <!-- Modales -->
     <div class="modal fade" id="categoryModal" tabindex="-1" aria-labelledby="categoryModalLabel" aria-hidden="true">
@@ -233,11 +221,6 @@ const authStore = useAuthStore(); // Usar store de auth
 
 const isEditMode = computed(() => route.params.id !== undefined);
 
-// Estado de grabación de voz
-const isRecording = ref(false);
-const isProcessingVoice = ref(false);
-let recognition = null;
-
 // Estado de UI de los collapsibles (Abiertos por defecto para reducir taps)
 const showAccount = ref(true);
 const showDetails = ref(true);
@@ -254,6 +237,7 @@ const expense = ref({
   is_installment: false,
   num_installments: null,
   installment_amount: null,
+  status: 'completed'
 });
 
 const loading = computed(() => expenseStore.loading || categoryStore.loading || accountStore.loading || recipientStore.loading);
@@ -309,7 +293,8 @@ onMounted(async () => {
       showAccount.value = true;
       showDetails.value = true;
     } else {
-      await expenseStore.fetchExpenses();
+      // If filtering by status in store, it might not be there if we came from list or direct link
+      await expenseStore.fetchExpenses(); 
       const foundExpense = expenseStore.expenses.find(exp => exp.id === expenseId);
       if (foundExpense) {
         expense.value = { ...foundExpense };
@@ -336,18 +321,27 @@ const resetForm = () => {
     is_installment: false,
     num_installments: null,
     installment_amount: null,
+    status: 'completed',
   };
 };
 
 const handleSubmit = async () => {
   try {
+    // Remove derived/internal fields that are not in the backend schemas
+    const { id, user_id, tenant_id, installment_amount, ...payload } = expense.value;
+    
+    // Always set status to completed when saving from the form
+    payload.status = 'completed';
+
     if (isEditMode.value) {
-      await expenseStore.updateExpense(parseInt(route.params.id), expense.value);
+      await expenseStore.updateExpense(parseInt(route.params.id), payload);
     } else {
-      await expenseStore.createExpense(expense.value);
+      await expenseStore.createExpense(payload);
     }
     if (isEditMode.value) {
-      router.push('/expenses');
+      // Redirect back to where we came from or default to expenses
+      const redirectTo = expense.value.status === 'pending' || route.query.from === 'inbox' ? '/inbox' : '/expenses';
+      router.push(redirectTo);
     } else {
       resetForm(); // Limpiar después de guardar si es carga rápida
       alert("Movimiento guardado con éxito.");
@@ -388,132 +382,59 @@ const closeModal = (modalId) => {
     }, 300);
   }
 };
-
-// --- Lógica de Voz ---
-const toggleRecording = () => {
-  if (isRecording.value) {
-    recognition.stop();
-    return;
-  }
-
-  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SpeechRecognition) {
-    alert("Lo siento, tu navegador no soporta reconocimiento de voz.");
-    return;
-  }
-
-  recognition = new SpeechRecognition();
-  recognition.lang = 'es-ES';
-  recognition.interimResults = false;
-  recognition.maxAlternatives = 1;
-
-  recognition.onstart = () => {
-    isRecording.value = true;
-  };
-
-  recognition.onresult = (event) => {
-    const text = event.results[0][0].transcript;
-    console.log("Texto detectado:", text);
-    processVoiceText(text);
-  };
-
-  recognition.onerror = (event) => {
-    console.error("Error en reconocimiento:", event.error);
-    isRecording.value = false;
-  };
-
-  recognition.onend = () => {
-    isRecording.value = false;
-  };
-
-  recognition.start();
-};
-
-const processVoiceText = async (text) => {
-  isProcessingVoice.value = true;
-  try {
-    const response = await apiClient.post('/process-voice', { text: text });
-    const data = response.data;
-    
-    // Autocompletar el formulario básico
-    if (data.amount) expense.value.amount = data.amount;
-    if (data.description) expense.value.description = data.description;
-    if (data.date) expense.value.date = data.date;
-    if (data.movement_type) expense.value.movement_type = data.movement_type;
-
-    // Lógica de coincidencia difusa para listas (Ignora mayúsculas y acentos)
-    const normalize = (str) => str ? str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") : "";
-
-    // 1. Asignar Cuenta
-    if (data.account_hint) {
-      const hint = normalize(data.account_hint);
-      const matchedAccount = accounts.value.find(acc => normalize(acc.name).includes(hint) || hint.includes(normalize(acc.name)));
-      if (matchedAccount) {
-        expense.value.account_id = matchedAccount.id;
-        // 2. Asignar Cuotas si la cuenta es de crédito
-        if (data.installments && matchedAccount.is_credit_card) {
-          expense.value.is_installment = true;
-          expense.value.num_installments = data.installments;
-        }
-      }
-    }
-
-    // 3. Asignar Destinatario
-    if (data.recipient_hint) {
-      const hint = normalize(data.recipient_hint);
-      const matchedRecipient = recipients.value.find(rec => normalize(rec.name).includes(hint) || hint.includes(normalize(rec.name)));
-      if (matchedRecipient) {
-        expense.value.recipient_id = matchedRecipient.id;
-      }
-    }
-
-    // 4. Asignar Categoría
-    if (data.category_hint) {
-      const hint = normalize(data.category_hint);
-      const matchedCategory = categories.value.find(cat => normalize(cat.name).includes(hint) || hint.includes(normalize(cat.name)));
-      if (matchedCategory) {
-        expense.value.category_id = matchedCategory.id;
-      }
-    }
-
-    // Expandir secciones si se llenaron datos
-    showDetails.value = true;
-    showAccount.value = true;
-    
-    console.log("Formulario actualizado por Gemini:", data);
-  } catch (err) {
-    console.error("Error al procesar voz con Gemini:", err);
-    alert("Hubo un error al procesar tu voz con la IA. Por favor, inténtalo de nuevo.");
-  } finally {
-    isProcessingVoice.value = false;
-  }
-};
 </script>
 
 <style scoped>
-.recording-ripple {
-  position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.3);
-  animation: ripple 1.5s infinite;
+.user-header {
+  border-left: 4px solid #0d6efd;
+  padding-left: 12px;
 }
 
-@keyframes ripple {
-  0% { transform: scale(0.9); opacity: 1; }
-  100% { transform: scale(1.1); opacity: 0; }
+.drag-handle {
+  width: 36px;
+  height: 4px;
+  background-color: #e9ecef;
+  border-radius: 2px;
+  position: relative;
 }
+
+.drag-handle::before, .drag-handle::after {
+  content: "";
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background-color: #e9ecef;
+  border-radius: 50%;
+  top: 0;
+}
+.drag-handle::before { left: -8px; }
+.drag-handle::after { right: -8px; }
 
 .smaller {
   font-size: 0.75rem;
 }
+
+.tiny {
+  font-size: 0.65rem;
+}
+
 .form-control-sm, .form-select-sm, .input-group-text {
   font-size: 0.85rem;
-  padding-top: 0.25rem;
-  padding-bottom: 0.25rem;
 }
-.btn-lg {
-  padding-top: 0.5rem;
-  padding-bottom: 0.5rem;
+
+.btn-primary {
+  background-color: #0d6efd;
+  border: none;
+}
+
+.btn-white {
+  background-color: white;
+  color: #0d6efd;
+}
+
+/* Sombras suaves para inputs tipo Home */
+input:focus, select:focus {
+  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
+  background-color: white !important;
 }
 </style>

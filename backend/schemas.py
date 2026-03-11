@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from typing import Optional, List # Import List
-from datetime import date
+import datetime
 
 # Tenant Schemas
 class TenantBase(BaseModel):
@@ -100,14 +100,15 @@ class RecipientUpdate(RecipientBase):
 class ExpenseBase(BaseModel):
     description: str
     amount: float
-    date: date
-    application_date: date
+    date: datetime.date
+    application_date: datetime.date
     movement_type: str
     category_id: Optional[int] = None
     account_id: Optional[int] = None
     recipient_id: Optional[int] = None
     is_installment: Optional[bool] = False
     num_installments: Optional[int] = None
+    status: Optional[str] = "completed"
 
 
 class ExpenseCreate(ExpenseBase):
@@ -125,14 +126,15 @@ class Expense(ExpenseBase):
 class ExpenseUpdate(BaseModel):
     description: Optional[str] = None
     amount: Optional[float] = None
-    date: Optional[date] = None
-    application_date: Optional[date] = None
+    date: datetime.date | None = None
+    application_date: datetime.date | None = None
     movement_type: Optional[str] = None
     category_id: Optional[int] = None
     account_id: Optional[int] = None
     recipient_id: Optional[int] = None
     is_installment: Optional[bool] = None
     num_installments: Optional[int] = None
+    status: Optional[str] = None
 
 # Paginated Expense Schemas
 class PaginatedExpenses(BaseModel):

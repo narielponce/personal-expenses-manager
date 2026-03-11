@@ -28,6 +28,7 @@ def read_expenses(
     recipient_id: int | None = None,
     month: int | None = None,
     year: int | None = None,
+    status: str | None = None,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
@@ -43,7 +44,8 @@ def read_expenses(
         category_id=category_id,
         recipient_id=recipient_id,
         month=month,
-        year=year
+        year=year,
+        status=status
     ) # Unpack tuple
     return {"expenses": expenses, "total_count": total_count} # Return PaginatedExpenses object
 

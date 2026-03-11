@@ -1,37 +1,46 @@
 <template>
   <div class="summary-container mt-2 mb-4 px-2" style="max-width: 800px; margin-left: auto; margin-right: auto;">
-    <h2 class="h5 text-center mb-3 fw-bold text-dark">Resumen de Tarjetas</h2>
+    <!-- Header estilo Home -->
+    <div class="user-header mb-3 mt-1 px-1">
+      <h5 class="fw-bold mb-0">Resumen de <span class="text-primary">Tarjetas</span></h5>
+      <p class="text-muted tiny mb-0">Consumos y cuotas por período</p>
+    </div>
 
-    <!-- Filtros Modernizados (Acordeón) -->
-    <div class="card border-0 shadow-sm rounded-3 mb-3 overflow-hidden">
-      <div class="card-header bg-white border-0 py-2 px-3 d-flex justify-content-between align-items-center" @click="showFilters = !showFilters" style="cursor: pointer;">
-        <h6 class="mb-0 fw-bold text-secondary small"><i class="bi bi-funnel me-1"></i> Filtros del Informe</h6>
-        <i class="bi text-muted small" :class="showFilters ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+    <!-- Filtros Modernizados estilo Home -->
+    <div class="card border-0 shadow-sm rounded-4 mb-3 overflow-hidden">
+      <!-- Drag Handle -->
+      <div class="d-flex justify-content-center pt-2 pb-1" @click="showFilters = !showFilters" style="cursor: pointer;">
+        <div class="drag-handle"></div>
       </div>
-      <div v-show="showFilters" class="card-body p-3 bg-light-subtle border-top">
+
+      <div class="card-header bg-white border-0 py-1 px-3 d-flex justify-content-between align-items-center" @click="showFilters = !showFilters" style="cursor: pointer;">
+        <h6 class="mb-0 fw-bold text-secondary smaller"><i class="bi bi-funnel me-1"></i> Filtros</h6>
+        <i class="bi text-muted smaller" :class="showFilters ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+      </div>
+      <div v-show="showFilters" class="card-body p-3 bg-white">
         <div class="row g-2">
           <div class="col-md-6">
-            <label class="smaller text-muted fw-bold mb-1">Tarjeta</label>
-            <select class="form-select form-select-sm border-0 shadow-sm" v-model="selectedCardId">
+            <label class="tiny text-muted fw-bold mb-1 text-uppercase">Tarjeta</label>
+            <select class="form-select form-select-sm border-0 bg-light rounded-3 px-2" v-model="selectedCardId">
               <option value="">Todas las Tarjetas</option>
               <option v-for="card in cards" :key="card.id" :value="card.id">{{ card.name }}</option>
             </select>
           </div>
           <div class="col-6 col-md-3">
-            <label class="smaller text-muted fw-bold mb-1">Mes</label>
-            <select class="form-select form-select-sm border-0 shadow-sm" v-model="selectedMonth">
+            <label class="tiny text-muted fw-bold mb-1 text-uppercase">Mes</label>
+            <select class="form-select form-select-sm border-0 bg-light rounded-3 px-2" v-model="selectedMonth">
               <option v-for="(monthName, index) in months" :key="index" :value="index + 1">{{ monthName }}</option>
             </select>
           </div>
           <div class="col-6 col-md-3">
-            <label class="smaller text-muted fw-bold mb-1">Año</label>
-            <select class="form-select form-select-sm border-0 shadow-sm" v-model="selectedYear">
+            <label class="tiny text-muted fw-bold mb-1 text-uppercase">Año</label>
+            <select class="form-select form-select-sm border-0 bg-light rounded-3 px-2" v-model="selectedYear">
               <option v-for="year in years" :key="year" :value="year">{{ year }}</option>
             </select>
           </div>
           <div class="col-12 text-end mt-2">
-            <button @click="fetchCardSummary" class="btn btn-sm btn-primary rounded-2 px-4 fw-bold smaller shadow-sm">
-              <i class="bi bi-search me-1"></i> Buscar
+            <button @click="fetchCardSummary" class="btn btn-sm btn-primary rounded-pill px-4 fw-bold tiny shadow-sm">
+              BUSCAR
             </button>
           </div>
         </div>
@@ -47,33 +56,33 @@
       Error: {{ error.message }}
     </div>
     <div v-else>
-      <div v-if="cardSummary.length === 0" class="alert alert-info py-2 small text-center rounded-3 border-0 shadow-sm" role="alert">
-        <i class="bi bi-info-circle me-1"></i> No hay movimientos para los filtros seleccionados.
+      <div v-if="cardSummary.length === 0" class="alert alert-info py-2 tiny text-center rounded-4 border-0 shadow-sm" role="alert">
+        <i class="bi bi-info-circle me-1"></i> No hay movimientos para estos filtros.
       </div>
       <div v-else>
         
         <!-- Lista de Movimientos de Tarjeta -->
         <div class="card-summary-list">
           <div v-for="item in cardSummary" :key="item.id" class="mb-2">
-            <div class="card border-0 shadow-sm rounded-3 overflow-hidden">
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
               <div class="card-body p-2 px-3">
                 <div class="d-flex align-items-center gap-2">
-                  
                   <!-- Info Principal -->
                   <div class="flex-grow-1 min-width-0">
-                    <div class="d-flex flex-column justify-content-start align-items-start">
-                      <div class="w-100 overflow-hidden">
-                        <span class="fw-bold text-dark d-block text-truncate mb-0" style="max-width: 100%;" :title="item.description">
-                          {{ item.description }}
-                        </span>
-                      </div>
-                      <span class="fw-bold text-danger fs-6">
-                        -{{ formatCurrency(item.amount) }}
+                    <!-- Primer Renglón: Descripción -->
+                    <div class="min-width-0 overflow-hidden">
+                      <span class="fw-bold text-dark d-block text-truncate mb-0 smaller" :title="item.description">
+                        {{ item.description }}
                       </span>
                     </div>
-                    <div class="d-flex align-items-center smaller text-muted mt-1 flex-wrap">
-                      <span class="me-2 text-nowrap"><i class="bi bi-calendar3 me-1"></i>{{ formatDate(item.date) }}</span>
-                      <span class="text-truncate" style="max-width: 150px;"><i class="bi bi-wallet2 me-1"></i>{{ item.account_name }}</span>
+                    <!-- Segundo Renglón: Fecha e Importe -->
+                    <div class="d-flex justify-content-between align-items-center mt-1">
+                      <span class="tiny text-muted text-nowrap">
+                        <i class="bi bi-calendar3 me-1"></i>{{ formatDate(item.date) }}
+                      </span>
+                      <span class="fw-bold text-danger tiny">
+                        {{ formatCurrency(item.amount) }}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -82,10 +91,10 @@
           </div>
         </div>
 
-        <!-- Total Compacto -->
-        <div class="card border-0 shadow-sm rounded-3 mt-4 bg-dark text-white p-3 d-flex justify-content-between align-items-center">
-          <h6 class="mb-0 fw-bold small">TOTAL CONSUMOS:</h6>
-          <h5 class="mb-0 fw-bold fs-5">{{ formatCurrency(totalAmount) }}</h5>
+        <!-- Total Compacto estilo Home -->
+        <div class="card border-0 bg-primary text-white rounded-4 shadow-sm p-3 mt-4 d-flex justify-content-between align-items-center">
+          <span class="tiny opacity-75 fw-bold text-uppercase">Total Consumos</span>
+          <h5 class="fw-bold mb-0">{{ formatCurrency(totalAmount) }}</h5>
         </div>
       </div>
     </div>
@@ -190,26 +199,49 @@ onMounted(async () => {
   overflow-x: hidden;
 }
 
+.user-header {
+  border-left: 4px solid #0d6efd;
+  padding-left: 12px;
+}
+
+.drag-handle {
+  width: 36px;
+  height: 4px;
+  background-color: #e9ecef;
+  border-radius: 2px;
+  position: relative;
+}
+
+.drag-handle::before, .drag-handle::after {
+  content: "";
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background-color: #e9ecef;
+  border-radius: 50%;
+  top: 0;
+}
+.drag-handle::before { left: -8px; }
+.drag-handle::after { right: -8px; }
+
 .smaller {
   font-size: 0.75rem;
+}
+
+.tiny {
+  font-size: 0.65rem;
 }
 
 .min-width-0 {
   min-width: 0;
 }
 
-.bg-light-subtle {
-  background-color: rgba(0, 0, 0, 0.02) !important;
-}
-
 .card {
-  border: 1px solid rgba(0,0,0,0.05) !important;
   width: 100%;
 }
 
-.text-truncate {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.btn-primary {
+  background-color: #0d6efd;
+  border: none;
 }
 </style>

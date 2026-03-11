@@ -19,7 +19,8 @@ export const useExpenseStore = defineStore('expense', {
       categoryId = null,
       recipientId = null,
       month = null,
-      year = null
+      year = null,
+      status = null
     ) {
       this.loading = true;
       this.error = null;
@@ -33,6 +34,7 @@ export const useExpenseStore = defineStore('expense', {
         if (recipientId) params.recipient_id = recipientId;
         if (month) params.month = month;
         if (year) params.year = year;
+        if (status) params.status = status;
 
         const response = await apiClient.get('/expenses/', {
           params: params
@@ -42,6 +44,21 @@ export const useExpenseStore = defineStore('expense', {
       } catch (error) {
         this.error = error;
         console.error('Error fetching expenses:', error);
+      } finally {
+        this.loading = false;
+      }
+    },
+    async processVoiceAndSave(text) {
+      this.loading = true;
+      this.error = null;
+      try {
+        const response = await apiClient.post('/process-voice-and-save', { text });
+        this.expenses.unshift(response.data);
+        return response.data;
+      } catch (error) {
+        this.error = error;
+        console.error('Error processing voice and saving:', error);
+        throw error;
       } finally {
         this.loading = false;
       }

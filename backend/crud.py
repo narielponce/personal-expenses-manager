@@ -200,6 +200,7 @@ def create_expense(db: Session, expense: ExpenseCreate, user_id: int, tenant_id:
                 is_installment=False,
                 num_installments=None,
                 installment_amount=None,
+                status=expense.status or "completed",
                 user_id=user_id,
                 tenant_id=tenant_id
             )
@@ -259,7 +260,8 @@ def get_expenses_by_tenant(
     category_id: int | None = None,
     recipient_id: int | None = None,
     month: int | None = None,
-    year: int | None = None
+    year: int | None = None,
+    status: str | None = None
 ):
     query = db.query(Expense).filter(Expense.tenant_id == tenant_id)
 
@@ -277,6 +279,9 @@ def get_expenses_by_tenant(
         query = query.filter(Expense.category_id == category_id)
     if recipient_id:
         query = query.filter(Expense.recipient_id == recipient_id)
+
+    if status:
+        query = query.filter(Expense.status == status)
 
     if not (start_date or end_date):
         if month:

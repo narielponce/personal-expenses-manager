@@ -1,10 +1,26 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 from routers import auth, expenses, categories, accounts, recipients, voice
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 app = FastAPI(
     title="Expenses API",
     root_path="/api"
 )
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    errors = exc.errors()
+    logger.error(f"Validation error: {errors}")
+    return JSONResponse(
+        status_code=422,
+        content={"detail": errors},
+    )
 
 app.include_router(auth.router, tags=["auth"])
 app.include_router(expenses.router, tags=["expenses"])

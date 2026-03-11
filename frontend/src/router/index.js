@@ -124,6 +124,18 @@ const router = createRouter({
       component: () => import('../views/reports/CardSummaryView.vue'),
       meta: { requiresAuth: true }
     },
+    {
+      path: '/inbox',
+      name: 'inbox',
+      component: () => import('../views/InboxView.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/settings',
+      name: 'settings',
+      component: () => import('../views/SettingsView.vue'),
+      meta: { requiresAuth: true }
+    },
   ],
 })
 

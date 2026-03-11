@@ -1,6 +1,10 @@
 <template>
   <div class="summary-container mt-2 mb-4 px-2 px-md-3" style="max-width: 800px; margin-left: auto; margin-right: auto;">
-    <h2 class="h5 text-center mb-3 fw-bold text-dark">Movimientos</h2>
+    <!-- Header estilo Home -->
+    <div class="user-header mb-3 mt-1 px-1">
+      <h5 class="fw-bold mb-0">Listado de <span class="text-primary">Movimientos</span></h5>
+      <p class="text-muted tiny mb-0">Historial completo de tus finanzas</p>
+    </div>
     
     <div v-if="loading" class="text-center my-4">
       <div class="spinner-border text-primary" role="status">
@@ -13,106 +17,100 @@
     </div>
     
     <div v-else>
-      <!-- Filtros Modernizados -->
-      <div class="card border-0 shadow-sm rounded-3 mb-3 overflow-hidden">
-        <div class="card-header bg-white border-0 py-2 px-3 d-flex justify-content-between align-items-center" @click="showFilters = !showFilters" style="cursor: pointer;">
-          <h6 class="mb-0 fw-bold text-secondary small"><i class="bi bi-funnel me-1"></i> Filtros de Movimientos</h6>
-          <i class="bi text-muted small" :class="showFilters ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+      <!-- Filtros Modernizados estilo Home -->
+      <div class="card border-0 shadow-sm rounded-4 mb-3 overflow-hidden">
+        <!-- Drag Handle -->
+        <div class="d-flex justify-content-center pt-2 pb-1" @click="showFilters = !showFilters" style="cursor: pointer;">
+          <div class="drag-handle"></div>
         </div>
-        <div v-show="showFilters" class="card-body p-3 bg-light-subtle border-top">
+        
+        <div class="card-header bg-white border-0 py-1 px-3 d-flex justify-content-between align-items-center" @click="showFilters = !showFilters" style="cursor: pointer;">
+          <h6 class="mb-0 fw-bold text-secondary smaller"><i class="bi bi-funnel me-1"></i> Filtros</h6>
+          <i class="bi text-muted smaller" :class="showFilters ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+        </div>
+        <div v-show="showFilters" class="card-body p-3 bg-white">
           <div class="row g-2">
             <div class="col-md-4">
-              <label class="smaller text-muted fw-bold mb-1">Descripción</label>
-              <input type="text" class="form-control form-control-sm border-0 shadow-sm" v-model="filterDescription" @keyup.enter="applyFilters" placeholder="Buscar...">
+              <label class="tiny text-muted fw-bold mb-1 text-uppercase">Descripción</label>
+              <input type="text" class="form-control form-control-sm border-0 bg-light rounded-3 px-2" v-model="filterDescription" @keyup.enter="applyFilters" placeholder="Buscar...">
             </div>
             <div class="col-6 col-md-4">
-              <label class="smaller text-muted fw-bold mb-1">Desde</label>
-              <input type="date" class="form-control form-control-sm border-0 shadow-sm" v-model="filterStartDate">
+              <label class="tiny text-muted fw-bold mb-1 text-uppercase">Desde</label>
+              <input type="date" class="form-control form-control-sm border-0 bg-light rounded-3 px-2" v-model="filterStartDate">
             </div>
             <div class="col-6 col-md-4">
-              <label class="smaller text-muted fw-bold mb-1">Hasta</label>
-              <input type="date" class="form-control form-control-sm border-0 shadow-sm" v-model="filterEndDate">
+              <label class="tiny text-muted fw-bold mb-1 text-uppercase">Hasta</label>
+              <input type="date" class="form-control form-control-sm border-0 bg-light rounded-3 px-2" v-model="filterEndDate">
             </div>
             <div class="col-md-4">
-              <label class="smaller text-muted fw-bold mb-1">Categoría</label>
-              <select class="form-select form-select-sm border-0 shadow-sm" v-model="filterCategoryId">
+              <label class="tiny text-muted fw-bold mb-1 text-uppercase">Categoría</label>
+              <select class="form-select form-select-sm border-0 bg-light rounded-3 px-2" v-model="filterCategoryId">
                 <option :value="null">Todas</option>
                 <option v-for="category in categories" :key="category.id" :value="category.id">{{ category.name }}</option>
               </select>
             </div>
             <div class="col-md-4">
-              <label class="smaller text-muted fw-bold mb-1">Cuenta</label>
-              <select class="form-select form-select-sm border-0 shadow-sm" v-model="filterAccountId">
+              <label class="tiny text-muted fw-bold mb-1 text-uppercase">Cuenta</label>
+              <select class="form-select form-select-sm border-0 bg-light rounded-3 px-2" v-model="filterAccountId">
                 <option :value="null">Todas</option>
                 <option v-for="account in accounts" :key="account.id" :value="account.id">{{ account.name }}</option>
               </select>
             </div>
-            <div class="col-md-4">
-              <label class="smaller text-muted fw-bold mb-1">Destinatario</label>
-              <select class="form-select form-select-sm border-0 shadow-sm" v-model="filterRecipientId">
-                <option :value="null">Todos</option>
-                <option v-for="recipient in recipients" :key="recipient.id" :value="recipient.id">{{ recipient.name }}</option>
-              </select>
-            </div>
-            <div class="col-12 text-end mt-2">
-              <button class="btn btn-sm btn-outline-secondary border-0 me-2 fw-bold smaller" @click="resetFilters">Limpiar</button>
-              <button class="btn btn-sm btn-primary rounded-2 px-3 fw-bold smaller" @click="applyFilters">Aplicar Filtros</button>
+            <div class="col-md-4 text-end d-flex align-items-end justify-content-end gap-2 mt-2 mt-md-0">
+              <button class="btn btn-sm btn-link text-decoration-none text-muted tiny fw-bold p-0" @click="resetFilters">LIMPIAR</button>
+              <button class="btn btn-sm btn-primary rounded-pill px-3 fw-bold tiny" @click="applyFilters">APLICAR</button>
             </div>
           </div>
         </div>
       </div>
 
       <div class="d-grid mb-3">
-        <router-link to="/expenses/new" class="btn btn-primary fw-semibold rounded-3 shadow-sm py-2">
-          <i class="bi bi-plus-lg me-1"></i> Registrar Movimiento
+        <router-link to="/expenses/new" class="btn btn-primary fw-bold rounded-pill shadow-sm py-2">
+          <i class="bi bi-plus-lg me-1"></i> NUEVO MOVIMIENTO
         </router-link>
       </div>
 
-      <!-- Lista de Movimientos Unificada con protección de desbordamiento -->
+      <!-- Lista de Movimientos estilo Home -->
       <div class="expense-list">
         <div v-for="expense in expenses" :key="expense.id" class="mb-2">
-          <div class="card border-0 shadow-sm rounded-3 overflow-hidden">
+          <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
             <div class="card-body p-2 px-3">
               <div class="d-flex align-items-center gap-2">
                 
-                <!-- Tipo (Pill) - Oculto en móviles extra pequeños si es necesario -->
-                <div class="flex-shrink-0 d-none d-sm-block">
-                  <span class="movement-pill" :class="expense.movement_type === 'expense' ? 'bg-danger' : 'bg-success'">
-                    <i class="bi" :class="expense.movement_type === 'expense' ? 'bi-arrow-down-left' : 'bi-arrow-up-right'"></i>
-                  </span>
+                <!-- Icono Tipo simplificado -->
+                <div class="flex-shrink-0">
+                  <div class="inbox-icon rounded-circle d-flex align-items-center justify-content-center" :class="expense.movement_type === 'expense' ? 'bg-danger-subtle' : 'bg-success-subtle'" style="width: 28px; height: 28px;">
+                    <i class="bi tiny" :class="[expense.movement_type === 'expense' ? 'bi-arrow-down-left text-danger' : 'bi-arrow-up-right text-success']"></i>
+                  </div>
                 </div>
 
                 <!-- Info Principal -->
                 <div class="flex-grow-1 min-width-0">
-                  <div class="d-flex flex-column flex-sm-row justify-content-sm-between align-items-sm-start">
+                  <div class="d-flex justify-content-between align-items-center">
                     <div class="min-width-0 overflow-hidden">
-                      <span class="fw-bold text-dark d-block text-truncate mb-0" :title="expense.description">
+                      <span class="fw-bold text-dark d-block text-truncate mb-0 smaller" :title="expense.description">
                         {{ expense.description }}
                       </span>
                     </div>
-                    <span class="fw-bold fs-6 text-nowrap" :class="expense.movement_type === 'expense' ? 'text-danger' : 'text-success'">
+                    <span class="fw-bold tiny" :class="expense.movement_type === 'expense' ? 'text-danger' : 'text-success'">
                       {{ expense.movement_type === 'expense' ? '-' : '+' }}{{ formatCurrency(expense.amount) }}
                     </span>
                   </div>
-                  <div class="d-flex align-items-center smaller text-muted mt-1 flex-wrap gap-x-2">
+                  <div class="d-flex align-items-center tiny text-muted mt-0 flex-wrap gap-x-2">
                     <span class="text-nowrap"><i class="bi bi-calendar3 me-1"></i>{{ formatDate(expense.date) }}</span>
                     <span v-if="expense.category_name" class="ms-1 ms-sm-2 text-truncate" style="max-width: 120px;"><i class="bi bi-tag me-1"></i>{{ expense.category_name }}</span>
                     <span v-if="expense.account_name" class="ms-1 ms-sm-2 text-truncate" style="max-width: 120px;"><i class="bi bi-wallet2 me-1"></i>{{ expense.account_name }}</span>
                   </div>
                 </div>
 
-                <!-- Acciones -->
+                <!-- Acciones discretas -->
                 <div class="d-flex align-items-center ms-auto action-buttons">
-                  <router-link :to="`/expenses/${expense.id}`" class="btn btn-light-blue btn-sm border-0 rounded-2 me-1" title="Ver">
-                    <i class="bi bi-eye text-primary"></i>
+                  <router-link :to="`/expenses/${expense.id}/edit`" class="btn btn-link text-warning p-1" title="Editar">
+                    <i class="bi bi-pencil-square fs-6"></i>
                   </router-link>
                   
-                  <router-link :to="`/expenses/${expense.id}/edit`" class="btn btn-light-warning btn-sm border-0 rounded-2 me-1" title="Editar">
-                    <i class="bi bi-pencil text-warning-emphasis"></i>
-                  </router-link>
-                  
-                  <button @click="deleteExpense(expense.id)" class="btn btn-light-danger btn-sm border-0 rounded-2" title="Eliminar">
-                    <i class="bi bi-trash text-danger"></i>
+                  <button @click="deleteExpense(expense.id)" class="btn btn-link text-danger p-1" title="Eliminar">
+                    <i class="bi bi-trash fs-6"></i>
                   </button>
                 </div>
               </div>
@@ -121,19 +119,19 @@
         </div>
       </div>
 
-      <!-- Paginación Modernizada -->
+      <!-- Paginación estilo Home -->
       <nav aria-label="Page navigation" v-if="totalPages > 1">
         <ul class="pagination pagination-sm justify-content-center mt-4 border-0">
           <li class="page-item" :class="{ disabled: currentPage === 1 }">
-            <a class="page-link border-0 rounded-3 me-1 shadow-sm" href="#" @click.prevent="changePage(currentPage - 1)">
+            <a class="page-link border-0 rounded-circle mx-1 shadow-sm" href="#" @click.prevent="changePage(currentPage - 1)">
               <i class="bi bi-chevron-left"></i>
             </a>
           </li>
           <li class="page-item" v-for="page in totalPages" :key="page" :class="{ active: currentPage === page }">
-            <a class="page-link border-0 rounded-3 mx-1 shadow-sm" href="#" @click.prevent="changePage(page)">{{ page }}</a>
+            <a class="page-link border-0 rounded-circle mx-1 shadow-sm" href="#" @click.prevent="changePage(page)">{{ page }}</a>
           </li>
           <li class="page-item" :class="{ disabled: currentPage === totalPages }">
-            <a class="page-link border-0 rounded-3 ms-1 shadow-sm" href="#" @click.prevent="changePage(currentPage + 1)">
+            <a class="page-link border-0 rounded-circle mx-1 shadow-sm" href="#" @click.prevent="changePage(currentPage + 1)">
               <i class="bi bi-chevron-right"></i>
             </a>
           </li>
@@ -253,8 +251,37 @@ const deleteExpense = async (id) => {
   overflow-x: hidden;
 }
 
+.user-header {
+  border-left: 4px solid #0d6efd;
+  padding-left: 12px;
+}
+
+.drag-handle {
+  width: 36px;
+  height: 4px;
+  background-color: #e9ecef;
+  border-radius: 2px;
+  position: relative;
+}
+
+.drag-handle::before, .drag-handle::after {
+  content: "";
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background-color: #e9ecef;
+  border-radius: 50%;
+  top: 0;
+}
+.drag-handle::before { left: -8px; }
+.drag-handle::after { right: -8px; }
+
 .smaller {
   font-size: 0.75rem;
+}
+
+.tiny {
+  font-size: 0.65rem;
 }
 
 .min-width-0 {
@@ -265,38 +292,23 @@ const deleteExpense = async (id) => {
   column-gap: 0.5rem;
 }
 
-.movement-pill {
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  color: white;
-  font-size: 1rem;
+.bg-danger-subtle { background-color: #f8d7da !important; }
+.bg-success-subtle { background-color: #d1e7dd !important; }
+
+.action-buttons .btn-link {
+  text-decoration: none;
+  opacity: 0.7;
 }
-
-.bg-light-subtle {
-  background-color: rgba(0, 0, 0, 0.02) !important;
-}
-
-/* Colores de botones sutiles */
-.btn-light-blue { background-color: #e7f1ff; }
-.btn-light-blue:hover { background-color: #cfe2ff; }
-.btn-light-warning { background-color: #fff3cd; }
-.btn-light-warning:hover { background-color: #ffecb5; }
-.btn-light-danger { background-color: #f8d7da; }
-.btn-light-danger:hover { background-color: #f1aeb5; }
-
-.action-buttons .btn {
-  padding: 0.25rem 0.45rem;
-}
-
-.action-buttons {
-  flex-shrink: 0;
+.action-buttons .btn-link:hover {
+  opacity: 1;
 }
 
 .page-link {
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: #6c757d;
   background-color: #fff;
 }
@@ -307,7 +319,6 @@ const deleteExpense = async (id) => {
 }
 
 .card {
-  border: 1px solid rgba(0,0,0,0.05) !important;
   width: 100%;
 }
 </style>

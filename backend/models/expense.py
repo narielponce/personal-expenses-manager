@@ -18,6 +18,7 @@ class Expense(Base):
     is_installment = Column(Boolean, default=False)
     num_installments = Column(Integer, nullable=True)
     installment_amount = Column(Float, nullable=True)
+    status = Column(String, default="completed") # 'pending' or 'completed'
     user_id = Column(Integer, ForeignKey("users.id"))
     tenant_id = Column(Integer, ForeignKey("tenants.id"))
 

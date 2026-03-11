@@ -1,112 +1,191 @@
 <template>
-  <div class="d-flex">
-    <!-- Sidebar -->
-    <div class="offcanvas offcanvas-start bg-light border-right d-flex flex-column" tabindex="-1" id="sidebarMenu" aria-labelledby="sidebarMenuLabel">
-      <div class="offcanvas-header">
-        <h5 class="offcanvas-title sidebar-heading" id="sidebarMenuLabel">Administrador de Gastos</h5>
-        <button type="button" class="btn-close text-reset d-block d-md-none" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+  <div class="main-layout" :class="{ 'mobile-layout': isMobile }">
+    <!-- Desktop Sidebar -->
+    <div v-if="!isMobile" id="sidebarMenu" class="bg-light border-right d-flex flex-column shadow-sm">
+      <div class="sidebar-header p-3 border-bottom bg-white">
+        <h5 class="sidebar-heading mb-0 fw-bold text-primary text-center">Gestor Gastos</h5>
       </div>
-      <div class="offcanvas-body d-md-flex flex-column p-0">
-        <div class="list-group list-group-flush">
-          <a href="#" @click.prevent="navigateTo('/home')" class="list-group-item list-group-item-action bg-light" data-bs-dismiss="offcanvas">Inicio</a>
-          <a href="#" @click.prevent="navigateTo('/accounts')" class="list-group-item list-group-item-action bg-light" data-bs-dismiss="offcanvas">Cuentas</a>
-          <a href="#" @click.prevent="navigateTo('/categories')" class="list-group-item list-group-item-action bg-light" data-bs-dismiss="offcanvas">Categorías</a>
-          <a href="#" @click.prevent="navigateTo('/recipients')" class="list-group-item list-group-item-action bg-light" data-bs-dismiss="offcanvas">Destinatarios</a>
-          <a href="#" @click.prevent="navigateTo('/expenses')" class="list-group-item list-group-item-action bg-light" data-bs-dismiss="offcanvas">Movimientos</a>
-
-          <!-- Reports Dropdown -->
-          <a href="#submenuReports" data-bs-toggle="collapse" aria-expanded="false" class="list-group-item list-group-item-action bg-light dropdown-toggle">
-            Informes
-          </a>
-          <div class="collapse" id="submenuReports">
-            <a href="#" @click.prevent="navigateTo('/reports/card-summary')" class="list-group-item list-group-item-action bg-light ps-4" data-bs-dismiss="offcanvas">Resumen tarjetas</a>
-          </div>
-
-          <a href="#" @click.prevent="handleLogoutAndDismiss" class="list-group-item list-group-item-action bg-light">Salir</a>
+      <div class="list-group list-group-flush flex-grow-1 overflow-auto">
+        <router-link to="/home" class="list-group-item list-group-item-action bg-light py-3 border-0">
+          <i class="bi bi-house-door me-2"></i> Inicio
+        </router-link>
+        <router-link to="/inbox" class="list-group-item list-group-item-action bg-light py-3 border-0">
+          <i class="bi bi-inbox me-2"></i> Inbox
+        </router-link>
+        <router-link to="/expenses" class="list-group-item list-group-item-action bg-light py-3 border-0">
+          <i class="bi bi-receipt me-2"></i> Movimientos
+        </router-link>
+        
+        <div class="border-top mt-2 pt-2 px-3 mb-2">
+          <small class="text-muted fw-bold text-uppercase" style="font-size: 0.65rem;">Análisis</small>
         </div>
+        <router-link to="/reports/card-summary" class="list-group-item list-group-item-action bg-light py-2 border-0 ps-4">
+          <i class="bi bi-bar-chart-line me-2"></i> Reportes
+        </router-link>
+
+        <div class="border-top mt-2 pt-2 px-3 mb-2">
+          <small class="text-muted fw-bold text-uppercase" style="font-size: 0.65rem;">Configuración</small>
+        </div>
+        <router-link to="/settings" class="list-group-item list-group-item-action bg-light py-3 border-0">
+          <i class="bi bi-gear me-2"></i> Ajustes
+        </router-link>
+      </div>
+      <div class="sidebar-footer p-3 border-top mt-auto bg-white">
+        <button @click="handleLogout" class="btn btn-outline-danger w-100 btn-sm">
+          <i class="bi bi-box-arrow-right me-1"></i> Salir
+        </button>
       </div>
     </div>
-    <!-- /#sidebar-wrapper -->
+
+    <!-- Mobile Top Header (Minimal) -->
+    <nav v-if="isMobile" class="navbar navbar-light bg-white border-bottom fixed-top px-3 py-2 shadow-sm">
+      <h6 class="mb-0 fw-bold text-primary">Gestor Gastos</h6>
+      <div class="d-flex align-items-center">
+        <button class="btn btn-link text-danger p-0 ms-2" @click="handleLogout" title="Cerrar Sesión">
+          <i class="bi bi-box-arrow-right fs-5"></i>
+        </button>
+      </div>
+    </nav>
 
     <!-- Page Content -->
-    <div id="page-content-wrapper" class="flex-grow-1">
-      <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom fixed-top">
-        <div class="container-fluid">
-          <button class="navbar-toggler d-md-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu" aria-controls="sidebarMenu" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-          </button>
-          <h5 class="ms-3 me-auto d-none d-md-block">Panel de Administrador de Gastos</h5>
-          <h5 class="ms-3 me-auto d-md-none">Administrador de Gastos</h5>
-        </div>
-      </nav>
-
-      <div class="container-fluid mt-4 pt-1">
-        <slot></slot> <!-- Main content goes here -->
+    <div id="page-content-wrapper" class="flex-grow-1" :class="{ 'pb-5 mb-4': isMobile }">
+      <div class="container-fluid py-3 px-3 px-md-4 mt-2">
+        <slot></slot>
       </div>
     </div>
-    <!-- /#page-content-wrapper -->
+
+    <!-- Mobile Bottom Navigation Bar -->
+    <nav v-if="isMobile" class="mobile-bottom-nav fixed-bottom bg-white border-top d-flex justify-content-around align-items-center">
+      <router-link to="/home" class="nav-item d-flex flex-column align-items-center py-2 px-3 text-decoration-none" :class="{ active: currentRoute === '/home' }">
+        <i class="bi" :class="currentRoute === '/home' ? 'bi-house-door-fill' : 'bi-house-door'"></i>
+        <span class="smaller">Home</span>
+      </router-link>
+      <router-link to="/inbox" class="nav-item d-flex flex-column align-items-center py-2 px-3 text-decoration-none" :class="{ active: currentRoute === '/inbox' }">
+        <i class="bi" :class="currentRoute === '/inbox' ? 'bi-inbox-fill' : 'bi-inbox'"></i>
+        <span class="smaller">Inbox</span>
+      </router-link>
+      <router-link to="/expenses" class="nav-item d-flex flex-column align-items-center py-2 px-3 text-decoration-none" :class="{ active: currentRoute === '/expenses' }">
+        <i class="bi" :class="currentRoute === '/expenses' ? 'bi-receipt-cutoff' : 'bi-receipt'"></i>
+        <span class="smaller">Movs</span>
+      </router-link>
+      <router-link to="/reports/card-summary" class="nav-item d-flex flex-column align-items-center py-2 px-3 text-decoration-none" :class="{ active: currentRoute.startsWith('/reports') }">
+        <i class="bi" :class="currentRoute.startsWith('/reports') ? 'bi-bar-chart-line-fill' : 'bi-bar-chart-line'"></i>
+        <span class="smaller">Reportes</span>
+      </router-link>
+      <router-link to="/settings" class="nav-item d-flex flex-column align-items-center py-2 px-3 text-decoration-none" :class="{ active: currentRoute === '/settings' }">
+        <i class="bi" :class="currentRoute === '/settings' ? 'bi-gear-fill' : 'bi-gear'"></i>
+        <span class="smaller">Ajustes</span>
+      </router-link>
+    </nav>
   </div>
 </template>
 
 <script setup>
-import { useRouter } from 'vue-router'
-import { useAuthStore } from '@/stores/auth'
-import * as bootstrap from 'bootstrap'; // Import Bootstrap JS
+import { computed } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import { useAuthStore } from '@/stores/auth';
+import { useBreakpoints } from '@/composables/useBreakpoints';
 
-const authStore = useAuthStore()
-const router = useRouter()
+const authStore = useAuthStore();
+const router = useRouter();
+const route = useRoute();
+const { isMobile } = useBreakpoints();
 
-const navigateTo = (path) => {
-  // Dismiss offcanvas if open
-  const sidebarOffcanvas = bootstrap.Offcanvas.getInstance(document.getElementById('sidebarMenu'));
-  if (sidebarOffcanvas) {
-    sidebarOffcanvas.hide();
-  }
-  router.push(path);
-};
+const currentRoute = computed(() => route.path);
 
-const handleLogoutAndDismiss = () => {
-  // Dismiss offcanvas if open
-  const sidebarOffcanvas = bootstrap.Offcanvas.getInstance(document.getElementById('sidebarMenu'));
-  if (sidebarOffcanvas) {
-    sidebarOffcanvas.hide();
-  }
-  authStore.logout()
-  router.push('/')
+const handleLogout = () => {
+  authStore.logout();
+  router.push('/');
 }
 </script>
 
 <style scoped>
-/* Custom styles to adjust for offcanvas behavior on desktop */
+.main-layout {
+  display: flex;
+  min-height: 100vh;
+  background-color: #f8f9fa;
+}
+
+/* Sidebar Desktop */
 #sidebarMenu {
-  width: 15rem; /* Set explicit width for sidebar */
+  width: 240px;
+  height: 100vh;
+  position: sticky;
+  top: 0;
+  z-index: 1020;
 }
 
-/* For desktop, make the offcanvas always visible and part of the layout */
-@media (min-width: 768px) {
-  #sidebarMenu {
-    transform: none; /* Override offcanvas transform to always show */
-    visibility: visible !important;
-    position: sticky; /* Keep it in the flow */
-    top: 0;
-    height: 100vh; /* Full height */
-    margin-right: 0;
-    border-right: 1px solid #dee2e6; /* Border */
-    z-index: 0; /* Less z-index than fixed navbar */
-  }
-
-  #page-content-wrapper {
-    margin-left: 15rem; /* Make space for the sidebar */
-  }
-
-  .navbar.fixed-top {
-    left: 15rem; /* Adjust fixed navbar position */
-    width: calc(100% - 15rem);
-  }
+.list-group-item {
+  color: #6c757d;
+  font-weight: 500;
+  transition: all 0.2s;
 }
 
-/* Adjust main content padding for fixed navbar */
-.container-fluid.mt-4.pt-1 {
-  padding-top: calc(0.25rem + 56px) !important; /* Reducido al mínimo: 0.25rem + altura navbar */
+.list-group-item:hover {
+  background-color: #eef2f7 !important;
+  color: #0d6efd;
+}
+
+.router-link-active {
+  background-color: #e7f1ff !important;
+  color: #0d6efd !important;
+  border-right: 3px solid #0d6efd !important;
+}
+
+/* Mobile Layout */
+.mobile-layout {
+  flex-direction: column;
+}
+
+.mobile-layout #page-content-wrapper {
+  margin-top: 56px; /* Space for top navbar */
+}
+
+/* Bottom Nav */
+.mobile-bottom-nav {
+  height: 65px;
+  z-index: 1030;
+  box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+}
+
+.nav-item {
+  color: #6c757d;
+  flex: 1;
+  transition: color 0.2s;
+}
+
+.nav-item i {
+  font-size: 1.25rem;
+}
+
+.nav-item.active {
+  color: #0d6efd;
+}
+
+.smaller {
+  font-size: 0.65rem;
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+/* FAB Button */
+.nav-item-center {
+  width: 60px;
+  position: relative;
+  display: flex;
+  justify-content: center;
+}
+
+.fab-btn {
+  width: 50px;
+  height: 50px;
+  position: absolute;
+  top: -35px;
+  border: 4px solid white;
+}
+
+/* Adjustments */
+#page-content-wrapper {
+  transition: all 0.3s;
 }
 </style>
