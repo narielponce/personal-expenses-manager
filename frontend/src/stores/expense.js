@@ -39,6 +39,7 @@ export const useExpenseStore = defineStore('expense', {
         const response = await apiClient.get('/expenses/', {
           params: params
         });
+        console.log('JSON recibido del backend:', response.data.expenses);
         this.expenses = response.data.expenses;
         this.totalExpensesCount = response.data.total_count;
       } catch (error) {

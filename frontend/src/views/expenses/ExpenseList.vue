@@ -119,17 +119,42 @@
         </div>
       </div>
 
-      <!-- Paginación estilo Home -->
+      <!-- Paginación Compacta estilo Home -->
       <nav aria-label="Page navigation" v-if="totalPages > 1">
-        <ul class="pagination pagination-sm justify-content-center mt-4 border-0">
+        <ul class="pagination pagination-sm justify-content-center mt-4 border-0 align-items-center">
+          <!-- Flecha Izquierda -->
           <li class="page-item" :class="{ disabled: currentPage === 1 }">
             <a class="page-link border-0 rounded-circle mx-1 shadow-sm" href="#" @click.prevent="changePage(currentPage - 1)">
               <i class="bi bi-chevron-left"></i>
             </a>
           </li>
-          <li class="page-item" v-for="page in totalPages" :key="page" :class="{ active: currentPage === page }">
+
+          <!-- Primera Página si no está en el rango -->
+          <template v-if="visiblePages[0] > 1">
+            <li class="page-item">
+              <a class="page-link border-0 rounded-circle mx-1 shadow-sm" href="#" @click.prevent="changePage(1)">1</a>
+            </li>
+            <li class="page-item disabled" v-if="visiblePages[0] > 2">
+              <span class="page-link border-0 bg-transparent">...</span>
+            </li>
+          </template>
+
+          <!-- Páginas Dinámicas -->
+          <li class="page-item" v-for="page in visiblePages" :key="page" :class="{ active: currentPage === page }">
             <a class="page-link border-0 rounded-circle mx-1 shadow-sm" href="#" @click.prevent="changePage(page)">{{ page }}</a>
           </li>
+
+          <!-- Última Página si no está en el rango -->
+          <template v-if="visiblePages[visiblePages.length - 1] < totalPages">
+            <li class="page-item disabled" v-if="visiblePages[visiblePages.length - 1] < totalPages - 1">
+              <span class="page-link border-0 bg-transparent">...</span>
+            </li>
+            <li class="page-item">
+              <a class="page-link border-0 rounded-circle mx-1 shadow-sm" href="#" @click.prevent="changePage(totalPages)">{{ totalPages }}</a>
+            </li>
+          </template>
+
+          <!-- Flecha Derecha -->
           <li class="page-item" :class="{ disabled: currentPage === totalPages }">
             <a class="page-link border-0 rounded-circle mx-1 shadow-sm" href="#" @click.prevent="changePage(currentPage + 1)">
               <i class="bi bi-chevron-right"></i>
@@ -175,11 +200,34 @@ const itemsPerPage = ref(10);
 
 const totalPages = computed(() => Math.ceil(totalExpensesCount.value / itemsPerPage.value));
 
+// Lógica para Páginas Visibles (Ventana Deslizante)
+const visiblePages = computed(() => {
+  const range = 2; // Número de páginas a mostrar a los lados de la actual
+  let start = Math.max(1, currentPage.value - range);
+  let end = Math.min(totalPages.value, currentPage.value + range);
+
+  // Ajustar si estamos cerca de los extremos
+  if (currentPage.value <= range) {
+    end = Math.min(totalPages.value, range * 2 + 1);
+  } else if (currentPage.value > totalPages.value - range) {
+    start = Math.max(1, totalPages.value - range * 2);
+  }
+
+  const pages = [];
+  for (let i = start; i <= end; i++) {
+    pages.push(i);
+  }
+  return pages;
+});
+
 const formatCurrency = (value) => {
   if (value === null || value === undefined) return '';
-  return value.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' $';
+  return new Intl.NumberFormat('es-ES', { 
+    minimumFractionDigits: 2, 
+    maximumFractionDigits: 2, 
+    useGrouping: true 
+  }).format(Number(value)) + ' $';
 };
-
 const formatDate = (dateStr) => {
   if (!dateStr) return '';
   // Si viene con T (ISO string), tomar solo la parte de la fecha
@@ -207,6 +255,8 @@ const changePage = (page) => {
   if (page >= 1 && page <= totalPages.value) {
     currentPage.value = page;
     fetchExpensesWithPagination();
+    // Scroll suave hacia arriba al cambiar de página
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 };
 
@@ -218,7 +268,7 @@ const applyFilters = () => {
 const resetFilters = () => {
   filterDescription.value = '';
   filterStartDate.value = null;
-  filterEndDate.value = null;
+  filterEndDate = null;
   filterCategoryId.value = null;
   filterAccountId.value = null;
   filterRecipientId.value = null;
@@ -304,18 +354,28 @@ const deleteExpense = async (id) => {
 }
 
 .page-link {
-  width: 30px;
-  height: 30px;
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: #6c757d;
   background-color: #fff;
+  font-weight: 600;
+  font-size: 0.75rem;
+  transition: all 0.2s ease;
 }
 
 .page-item.active .page-link {
   background-color: #0d6efd;
   color: #fff;
+  transform: scale(1.1);
+}
+
+.page-item.disabled .page-link {
+  opacity: 0.5;
+  background-color: transparent;
+  box-shadow: none;
 }
 
 .card {

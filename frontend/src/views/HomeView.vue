@@ -138,7 +138,12 @@ const totalSpent = computed(() => {
 
 const formatCurrency = (value) => {
   if (value === null || value === undefined) return '$0.00';
-  return '$' + value.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const formattedValue = new Intl.NumberFormat('es-ES', { 
+    minimumFractionDigits: 2, 
+    maximumFractionDigits: 2, 
+    useGrouping: true 
+  }).format(Number(value));
+  return '$' + formattedValue;
 };
 
 const formatDate = (dateStr) => {

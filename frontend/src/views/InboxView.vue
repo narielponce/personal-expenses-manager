@@ -89,9 +89,12 @@ const error = computed(() => expenseStore.error);
 
 const formatCurrency = (value) => {
   if (value === null || value === undefined) return '';
-  return value.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' $';
+  return new Intl.NumberFormat('es-ES', { 
+    minimumFractionDigits: 2, 
+    maximumFractionDigits: 2, 
+    useGrouping: true 
+  }).format(Number(value)) + ' $';
 };
-
 const formatDate = (dateStr) => {
   if (!dateStr) return '';
   const pureDate = dateStr.includes('T') ? dateStr.split('T')[0] : dateStr;
