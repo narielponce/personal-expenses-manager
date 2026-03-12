@@ -86,32 +86,48 @@
 
                 <!-- Info Principal -->
                 <div class="flex-grow-1 min-width-0">
-                  <div class="d-flex justify-content-between align-items-center">
-                    <div class="min-width-0 overflow-hidden">
-                      <span class="fw-bold text-dark d-block text-truncate mb-0 smaller" :title="expense.description">
-                        {{ expense.description }}
-                      </span>
-                    </div>
-                    <span class="fw-bold tiny" :class="expense.movement_type === 'expense' ? 'text-danger' : 'text-success'">
-                      {{ expense.movement_type === 'expense' ? '-' : '+' }}{{ formatCurrency(expense.amount) }}
+                  <!-- Primer Renglón: Descripción -->
+                  <div class="min-width-0 overflow-hidden">
+                    <span class="fw-bold text-dark d-block text-truncate mb-0 smaller" :title="expense.description">
+                      {{ expense.description }}
                     </span>
                   </div>
-                  <div class="d-flex align-items-center tiny text-muted mt-0 flex-wrap gap-x-2">
-                    <span class="text-nowrap"><i class="bi bi-calendar3 me-1"></i>{{ formatDate(expense.date) }}</span>
-                    <span v-if="expense.category_name" class="ms-1 ms-sm-2 text-truncate" style="max-width: 120px;"><i class="bi bi-tag me-1"></i>{{ expense.category_name }}</span>
-                    <span v-if="expense.account_name" class="ms-1 ms-sm-2 text-truncate" style="max-width: 120px;"><i class="bi bi-wallet2 me-1"></i>{{ expense.account_name }}</span>
-                  </div>
-                </div>
-
-                <!-- Acciones discretas -->
-                <div class="d-flex align-items-center ms-auto action-buttons">
-                  <router-link :to="`/expenses/${expense.id}/edit`" class="btn btn-link text-warning p-1" title="Editar">
-                    <i class="bi bi-pencil-square fs-6"></i>
-                  </router-link>
                   
-                  <button @click="deleteExpense(expense.id)" class="btn btn-link text-danger p-1" title="Eliminar">
-                    <i class="bi bi-trash fs-6"></i>
-                  </button>
+                  <!-- Segundo Renglón: Fechas, Importe y Acciones -->
+                  <div class="d-flex justify-content-between align-items-center mt-1">
+                    <div class="d-flex align-items-center tiny text-muted flex-wrap gap-x-2">
+                      <!-- Fecha de Compra -->
+                      <span class="text-nowrap" title="Fecha de compra">
+                        <i class="bi bi-cart me-1"></i>{{ formatDate(expense.date) }}
+                      </span>
+                      <!-- Fecha de Aplicación (solo si es diferente) -->
+                      <span v-if="expense.application_date && expense.application_date !== expense.date" class="text-nowrap text-primary fw-bold" title="Fecha de aplicación/pago">
+                        <i class="bi bi-calendar-check me-1"></i>{{ formatDate(expense.application_date) }}
+                      </span>
+                      <!-- Cuenta -->
+                      <span v-if="expense.account_name" class="text-truncate" style="max-width: 100px;">
+                        <i class="bi bi-wallet2 me-1"></i>{{ expense.account_name }}
+                      </span>
+                    </div>
+
+                    <div class="d-flex align-items-center gap-2">
+                      <!-- Importe -->
+                      <span class="fw-bold tiny me-1" :class="expense.movement_type === 'expense' ? 'text-danger' : 'text-success'">
+                        {{ expense.movement_type === 'expense' ? '-' : '+' }}{{ formatCurrency(expense.amount) }}
+                      </span>
+                      
+                      <!-- Acciones discretas -->
+                      <div class="d-flex align-items-center action-buttons">
+                        <router-link :to="`/expenses/${expense.id}/edit`" class="btn btn-link text-warning p-0 me-2" title="Editar">
+                          <i class="bi bi-pencil-square fs-6"></i>
+                        </router-link>
+                        
+                        <button @click="deleteExpense(expense.id)" class="btn btn-link text-danger p-0" title="Eliminar">
+                          <i class="bi bi-trash fs-6"></i>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>

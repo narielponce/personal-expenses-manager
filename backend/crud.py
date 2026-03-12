@@ -215,7 +215,7 @@ def create_expense(db: Session, expense: ExpenseCreate, user_id: int, tenant_id:
 def get_expenses_by_user(db: Session, user_id: int, skip: int = 0, limit: int = 100):
     query = db.query(Expense).filter(Expense.user_id == user_id)
     total_count = query.count()
-    expenses = query.offset(skip).limit(limit).all()
+    expenses = query.order_by(Expense.application_date.desc(), Expense.id.desc()).offset(skip).limit(limit).all()
     return expenses, total_count
 
 def get_expense(db: Session, expense_id: int, tenant_id: int):
@@ -290,5 +290,6 @@ def get_expenses_by_tenant(
             query = query.filter(extract('year', Expense.application_date) == year)
 
     total_count = query.count()
-    expenses = query.offset(skip).limit(limit).all()
+    # Ordenamos por fecha de aplicación descendente y por ID descendente para desempatar
+    expenses = query.order_by(Expense.application_date.desc(), Expense.id.desc()).offset(skip).limit(limit).all()
     return expenses, total_count

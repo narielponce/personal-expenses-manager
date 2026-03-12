@@ -97,16 +97,16 @@
                 </div>
                 <div class="col-8">
                   <div class="input-group input-group-sm">
-                    <select class="form-select border-0 bg-white rounded-start-3 py-1" id="categoryId" v-model="expense.category_id">
-                      <option :value="null">Seleccionar...</option>
-                      <option v-for="category in categories" :key="category.id" :value="category.id">{{ category.name }}</option>
-                    </select>
+                    <CategoryTreeSelect 
+                      v-model="expense.category_id" 
+                      :categories="categories" 
+                      class="flex-grow-1"
+                    />
                     <button class="btn btn-white border-0 bg-white rounded-end-3 py-1" type="button" data-bs-toggle="modal" data-bs-target="#categoryModal">
                       <i class="bi bi-plus-circle text-primary"></i>
                     </button>
                   </div>
-                </div>
-              </div>
+                </div>              </div>
 
               <div class="row g-2 mb-2 align-items-center">
                 <div class="col-4">
@@ -207,6 +207,7 @@ import { useAuthStore } from '../../stores/auth'; // Store de Auth
 import CategoryForm from '../categories/CategoryForm.vue';
 import AccountForm from '../accounts/AccountForm.vue';
 import RecipientForm from '../recipients/RecipientForm.vue';
+import CategoryTreeSelect from '../../components/CategoryTreeSelect.vue';
 
 import * as bootstrap from 'bootstrap';
 import apiClient from '../../api'; // Importar para llamar al backend
