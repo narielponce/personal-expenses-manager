@@ -290,6 +290,6 @@ def get_expenses_by_tenant(
             query = query.filter(extract('year', Expense.application_date) == year)
 
     total_count = query.count()
-    # Ordenamos por fecha de aplicación descendente y por ID descendente para desempatar
-    expenses = query.order_by(Expense.application_date.desc(), Expense.id.desc()).offset(skip).limit(limit).all()
+    # Ordenamos por fecha de compra descendente y por ID descendente para garantizar que lo nuevo aparezca primero
+    expenses = query.order_by(Expense.date.desc(), Expense.id.desc()).offset(skip).limit(limit).all()
     return expenses, total_count
