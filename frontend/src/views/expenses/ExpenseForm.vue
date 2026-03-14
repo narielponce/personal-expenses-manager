@@ -77,6 +77,9 @@
                   <select class="form-select form-select-sm border-0 bg-white rounded-3 py-1" id="numInstallments" v-model="expense.num_installments">
                     <option v-for="n in 24" :key="n" :value="n">{{ n }} {{ n === 1 ? 'Cuota' : 'Cuotas' }}</option>
                   </select>
+                  <div v-if="expense.num_installments > 1" class="text-primary tiny fw-bold mt-1 px-1">
+                    de {{ formatCurrency(installmentValue) }} cada una
+                  </div>
                 </div>
               </div>
             </div>
@@ -255,6 +258,22 @@ const error = computed(() => expenseStore.error || categoryStore.error || accoun
 const categories = computed(() => categoryStore.categories);
 const accounts = computed(() => accountStore.accounts);
 const recipients = computed(() => recipientStore.recipients);
+
+const formatCurrency = (value) => {
+  if (value === null || value === undefined) return '$0,00';
+  return new Intl.NumberFormat('es-ES', { 
+    minimumFractionDigits: 2, 
+    maximumFractionDigits: 2, 
+    useGrouping: true 
+  }).format(Number(value)) + ' $';
+};
+
+const installmentValue = computed(() => {
+  if (expense.value.amount && expense.value.num_installments && expense.value.num_installments > 0) {
+    return expense.value.amount / expense.value.num_installments;
+  }
+  return 0;
+});
 
 const selectedAccountIsCreditCard = computed(() => {
   const accountId = expense.value.account_id;

@@ -65,26 +65,13 @@ def get_tenant_by_name(db: Session, name: str):
     return db.query(Tenant).filter(Tenant.name == name).first()
 
 def seed_tenant_categories(db: Session, tenant_id: int):
-    """Carga las categorías por defecto para un nuevo tenant."""
     for cat_data in DEFAULT_CATEGORIES:
-        # Crear categoría padre
-        db_parent = Category(
-            name=cat_data["name"],
-            tenant_id=tenant_id,
-            parent_id=None
-        )
+        db_parent = Category(name=cat_data["name"], tenant_id=tenant_id, parent_id=None)
         db.add(db_parent)
         db.flush() 
-        
-        # Crear subcategorías
         for sub_name in cat_data["sub"]:
-            db_child = Category(
-                name=sub_name,
-                tenant_id=tenant_id,
-                parent_id=db_parent.id
-            )
+            db_child = Category(name=sub_name, tenant_id=tenant_id, parent_id=db_parent.id)
             db.add(db_child)
-    
     try:
         db.commit()
     except Exception as e:
@@ -96,18 +83,13 @@ def create_tenant(db: Session, tenant: TenantCreate):
     db.add(db_tenant)
     db.commit()
     db.refresh(db_tenant)
-    
-    # Sembrar categorías iniciales
     seed_tenant_categories(db, db_tenant.id)
-    
     return db_tenant
 
 def create_user(db: Session, user: UserCreate):
-    # Check if tenant exists, if not create it
     db_tenant = get_tenant_by_name(db, name=user.tenant_name)
     if not db_tenant:
         db_tenant = create_tenant(db, TenantCreate(name=user.tenant_name))
-
     hashed_password = get_password_hash(user.password)
     db_user = User(email=user.email, hashed_password=hashed_password, tenant_id=db_tenant.id)
     db.add(db_user)
@@ -116,11 +98,7 @@ def create_user(db: Session, user: UserCreate):
     return db_user
 
 def create_category(db: Session, category: CategoryCreate, tenant_id: int):
-    db_category = Category(
-        name=category.name,
-        tenant_id=tenant_id,
-        parent_id=category.parent_id
-    )
+    db_category = Category(name=category.name, tenant_id=tenant_id, parent_id=category.parent_id)
     db.add(db_category)
     db.commit()
     db.refresh(db_category)
@@ -144,7 +122,6 @@ def update_category(db: Session, category_id: int, category: CategoryUpdate, ten
 def delete_category(db: Session, category_id: int, tenant_id: int):
     db_category = db.query(Category).filter(Category.id == category_id, Category.tenant_id == tenant_id).first()
     if db_category:
-        # También eliminar o desvincular subcategorías si existieran en cascada
         db.delete(db_category)
         db.commit()
     return db_category
@@ -207,10 +184,8 @@ def delete_recipient(db: Session, recipient_id: int, tenant_id: int):
         db.commit()
     return db_recipient
 
-
 def create_expense(db: Session, expense: ExpenseCreate, user_id: int, tenant_id: int):
     expenses_to_create = []
-
     initial_application_date = expense.date
     if expense.account_id:
         account = db.query(Account).filter(Account.id == expense.account_id, Account.tenant_id == tenant_id).first()
@@ -225,20 +200,17 @@ def create_expense(db: Session, expense: ExpenseCreate, user_id: int, tenant_id:
 
     if expense.is_installment and expense.num_installments and expense.num_installments > 0:
         installment_amount_per_month = round(expense.amount / expense.num_installments, 2)
-        
         for i in range(expense.num_installments):
             current_application_date = initial_application_date
             if i > 0:
                 year = initial_application_date.year + (initial_application_date.month + i - 1) // 12
                 month = (initial_application_date.month + i - 1) % 12 + 1
                 day = initial_application_date.day
-
                 try:
                     current_application_date = date(year, month, day)
                 except ValueError:
                     temp_date = date(year, month + 1 if month < 12 else 1, 1) - timedelta(days=1)
                     current_application_date = date(year, month, temp_date.day)
-
             expenses_to_create.append(
                 Expense(
                     description=f"{expense.description} (Cuota {i+1}/{expense.num_installments})",
@@ -276,7 +248,6 @@ def create_expense(db: Session, expense: ExpenseCreate, user_id: int, tenant_id:
                 tenant_id=tenant_id
             )
         )
-    
     db.add_all(expenses_to_create)
     db.commit()
     for exp in expenses_to_create:
@@ -289,6 +260,24 @@ def get_expenses_by_user(db: Session, user_id: int, skip: int = 0, limit: int = 
     expenses = query.order_by(Expense.date.desc(), Expense.id.desc()).offset(skip).limit(limit).all()
     return expenses, total_count
 
+def get_income_expense_balance(db: Session, tenant_id: int, month: int, year: int):
+    # Obtenemos todos los movimientos completados del mes
+    expenses = db.query(Expense).filter(
+        Expense.tenant_id == tenant_id,
+        Expense.status == "completed",
+        extract('month', Expense.application_date) == month,
+        extract('year', Expense.application_date) == year
+    ).all()
+
+    total_income = sum(e.amount for e in expenses if e.movement_type == "income")
+    total_expense = sum(e.amount for e in expenses if e.movement_type == "expense")
+
+    return {
+        "total_income": round(total_income, 2),
+        "total_expense": round(total_expense, 2),
+        "balance": round(total_income - total_expense, 2)
+    }
+
 def get_expense(db: Session, expense_id: int, tenant_id: int):
     return db.query(Expense).filter(Expense.id == expense_id, Expense.tenant_id == tenant_id).first()
 
@@ -296,16 +285,13 @@ def update_expense(db: Session, expense_id: int, expense: ExpenseUpdate, tenant_
     db_expense = db.query(Expense).filter(Expense.id == expense_id, Expense.tenant_id == tenant_id).first()
     if db_expense:
         for key, value in expense.model_dump(exclude_unset=True).items():
-            if key in ["installment_amount"]:
-                continue
+            if key in ["installment_amount"]: continue
             setattr(db_expense, key, value)
-        
         if db_expense.is_installment and db_expense.num_installments and db_expense.num_installments > 0:
             if expense.amount is not None or expense.num_installments is not None:
                 db_expense.installment_amount = round(db_expense.amount / db_expense.num_installments, 2)
         else:
             db_expense.installment_amount = None
-
         db.commit()
         db.refresh(db_expense)
     return db_expense
@@ -317,47 +303,86 @@ def delete_expense(db: Session, expense_id: int, tenant_id: int):
         db.commit()
     return db_expense
 
-def get_expenses_by_tenant(
-    db: Session,
-    tenant_id: int,
-    skip: int = 0,
-    limit: int = 100,
-    description: str | None = None,
-    start_date: date | None = None,
-    end_date: date | None = None,
-    account_id: int | None = None,
-    category_id: int | None = None,
-    recipient_id: int | None = None,
-    month: int | None = None,
-    year: int | None = None,
-    status: str | None = None
-):
+def get_expenses_by_tenant(db: Session, tenant_id: int, skip: int = 0, limit: int = 100, **filters):
     query = db.query(Expense).filter(Expense.tenant_id == tenant_id)
-
-    if description:
-        query = query.filter(Expense.description.ilike(f"%{description}%"))
-
-    if start_date:
-        query = query.filter(Expense.application_date >= start_date)
-    if end_date:
-        query = query.filter(Expense.application_date <= end_date)
-
-    if account_id:
-        query = query.filter(Expense.account_id == account_id)
-    if category_id:
-        query = query.filter(Expense.category_id == category_id)
-    if recipient_id:
-        query = query.filter(Expense.recipient_id == recipient_id)
-
-    if status:
-        query = query.filter(Expense.status == status)
-
-    if not (start_date or end_date):
-        if month:
-            query = query.filter(extract('month', Expense.application_date) == month)
-        if year:
-            query = query.filter(extract('year', Expense.application_date) == year)
-
+    if filters.get("description"): query = query.filter(Expense.description.ilike(f"%{filters['description']}%"))
+    if filters.get("status"): query = query.filter(Expense.status == filters["status"])
+    if filters.get("month"): query = query.filter(extract('month', Expense.application_date) == filters["month"])
+    if filters.get("year"): query = query.filter(extract('year', Expense.application_date) == filters["year"])
     total_count = query.count()
     expenses = query.order_by(Expense.date.desc(), Expense.id.desc()).offset(skip).limit(limit).all()
     return expenses, total_count
+
+def get_expenses_by_category(db: Session, tenant_id: int, month: int, year: int, parent_id: int | None = None):
+    # 1. Calcular mes anterior para comparativa
+    prev_month, prev_year = (12, year - 1) if month == 1 else (month - 1, year)
+
+    # 2. Obtener TODAS las categorías del tenant para manejar jerarquía
+    all_cats = db.query(Category).filter(Category.tenant_id == tenant_id).all()
+    
+    # Mapa de hijos para navegación rápida
+    children_map = {}
+    for c in all_cats:
+        children_map.setdefault(c.parent_id, []).append(c)
+
+    # 3. Función para obtener todos los descendientes de una categoría (incluyéndose a sí misma)
+    def get_descendant_ids(cat_id):
+        ids = {cat_id}
+        for child in children_map.get(cat_id, []):
+            ids.update(get_descendant_ids(child.id))
+        return ids
+
+    # 4. Obtener todos los gastos de ambos meses (completados y de tipo gasto)
+    def get_month_expenses(m, y):
+        return db.query(Expense).filter(
+            Expense.tenant_id == tenant_id,
+            Expense.movement_type == "expense",
+            Expense.status == "completed",
+            extract('month', Expense.application_date) == m,
+            extract('year', Expense.application_date) == y
+        ).all()
+
+    current_expenses = get_month_expenses(month, year)
+    prev_expenses = get_month_expenses(prev_month, prev_year)
+
+    # 5. Definir qué categorías mostrar en este nivel
+    target_cats = children_map.get(parent_id, [])
+    
+    report_data = []
+    for cat in target_cats:
+        # Sumamos recursivamente los gastos de esta categoría y todas sus subcategorías
+        relevant_ids = get_descendant_ids(cat.id)
+        
+        curr_total = sum(e.amount for e in current_expenses if e.category_id in relevant_ids)
+        prev_total = sum(e.amount for e in prev_expenses if e.category_id in relevant_ids)
+        
+        diff_percent = 0
+        if prev_total > 0:
+            diff_percent = ((curr_total - prev_total) / prev_total) * 100
+        elif curr_total > 0:
+            diff_percent = 100
+
+        if curr_total > 0 or prev_total > 0:
+            report_data.append({
+                "category_id": cat.id,
+                "category_name": cat.name,
+                "total": round(curr_total, 2),
+                "variance_percent": round(diff_percent, 1),
+                "has_children": len(children_map.get(cat.id, [])) > 0
+            })
+
+    # Caso especial: Sin Categoría (solo se muestra en el nivel raíz)
+    if parent_id is None:
+        curr_none = sum(e.amount for e in current_expenses if e.category_id is None)
+        prev_none = sum(e.amount for e in prev_expenses if e.category_id is None)
+        if curr_none > 0 or prev_none > 0:
+            diff_none = ((curr_none - prev_none) / prev_none * 100) if prev_none > 0 else (100 if curr_none > 0 else 0)
+            report_data.append({
+                "category_id": 0,
+                "category_name": "Sin Categoría",
+                "total": round(curr_none, 2),
+                "variance_percent": round(diff_none, 1),
+                "has_children": False
+            })
+
+    return sorted(report_data, key=lambda x: x["total"], reverse=True)

@@ -19,8 +19,14 @@
         <div class="border-top mt-2 pt-2 px-3 mb-2">
           <small class="text-muted fw-bold text-uppercase" style="font-size: 0.65rem;">Análisis</small>
         </div>
+        <router-link to="/reports/by-category" class="list-group-item list-group-item-action bg-light py-2 border-0 ps-4">
+          <i class="bi bi-pie-chart me-2"></i> Por Categoría
+        </router-link>
         <router-link to="/reports/card-summary" class="list-group-item list-group-item-action bg-light py-2 border-0 ps-4">
-          <i class="bi bi-bar-chart-line me-2"></i> Reportes
+          <i class="bi bi-credit-card-2-front me-2"></i> Resumen Tarjetas
+        </router-link>
+        <router-link to="/reports/income-vs-expenses" class="list-group-item list-group-item-action bg-light py-2 border-0 ps-4">
+          <i class="bi bi-arrow-left-right me-2"></i> Ingresos vs Gastos
         </router-link>
 
         <div class="border-top mt-2 pt-2 px-3 mb-2">
@@ -68,7 +74,7 @@
         <i class="bi" :class="currentRoute === '/expenses' ? 'bi-receipt-cutoff' : 'bi-receipt'"></i>
         <span class="smaller">Movs</span>
       </router-link>
-      <router-link to="/reports/card-summary" class="nav-item d-flex flex-column align-items-center py-2 px-3 text-decoration-none" :class="{ active: currentRoute.startsWith('/reports') }">
+      <router-link to="/reports" class="nav-item d-flex flex-column align-items-center py-2 px-3 text-decoration-none" :class="{ active: currentRoute.startsWith('/reports') }">
         <i class="bi" :class="currentRoute.startsWith('/reports') ? 'bi-bar-chart-line-fill' : 'bi-bar-chart-line'"></i>
         <span class="smaller">Reportes</span>
       </router-link>

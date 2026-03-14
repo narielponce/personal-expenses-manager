@@ -119,9 +119,27 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
+      path: '/reports',
+      name: 'reports-hub',
+      component: () => import('../views/reports/ReportsView.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
       path: '/reports/card-summary',
       name: 'card-summary-report',
       component: () => import('../views/reports/CardSummaryView.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/reports/by-category',
+      name: 'category-report',
+      component: () => import('../views/reports/CategoryReportView.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/reports/income-vs-expenses',
+      name: 'income-vs-expenses-report',
+      component: () => import('../views/reports/IncomeVsExpensesView.vue'),
       meta: { requiresAuth: true }
     },
     {

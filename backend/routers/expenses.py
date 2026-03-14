@@ -71,3 +71,59 @@ def delete_expense(expense_id: int, db: Session = Depends(get_db), current_user:
     if db_expense is None:
         raise HTTPException(status_code=404, detail="Expense not found")
     return {"ok": True}
+
+@router.get("/expenses/reports/by-category")
+def read_expenses_by_category(
+    month: int,
+    year: int,
+    parent_id: int | None = None,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    return crud.get_expenses_by_category(db, tenant_id=current_user.tenant_id, month=month, year=year, parent_id=parent_id)
+
+@router.get("/expenses/reports/by-category/export")
+def export_expenses_by_category(
+    month: int,
+    year: int,
+    parent_id: int | None = None,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    import csv
+    import io
+    from fastapi.responses import StreamingResponse
+    
+    # Obtener los mismos datos que el reporte visual
+    data = crud.get_expenses_by_category(db, tenant_id=current_user.tenant_id, month=month, year=year, parent_id=parent_id)
+    
+    output = io.StringIO()
+    writer = csv.DictWriter(output, fieldnames=["category_name", "total", "variance_percent"])
+    
+    # Encabezados amigables
+    writer.writerow({"category_name": "Categoria", "total": "Monto Total", "variance_percent": "Variacion %"})
+    
+    for item in data:
+        writer.writerow({
+            "category_name": item["category_name"],
+            "total": item["total"],
+            "variance_percent": f"{item['variance_percent']}%"
+        })
+    
+    output.seek(0)
+    filename = f"reporte_categorias_{year}_{month}.csv"
+    
+    return StreamingResponse(
+        io.BytesIO(output.getvalue().encode("utf-8-sig")), # utf-8-sig para que Excel reconozca tildes
+        media_type="text/csv",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
+
+@router.get("/expenses/reports/income-vs-expenses")
+def read_income_expense_balance(
+    month: int,
+    year: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    return crud.get_income_expense_balance(db, tenant_id=current_user.tenant_id, month=month, year=year)
