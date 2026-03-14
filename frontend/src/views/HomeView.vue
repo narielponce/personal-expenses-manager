@@ -12,7 +12,7 @@
         <button 
           class="btn btn-action audio-btn shadow-sm w-100 d-flex flex-column align-items-center justify-content-center py-3 h-100"
           @click="toggleRecording"
-          :disabled="isProcessingVoice"
+          :disabled="isProcessingVoice || isProcessingImage"
           :class="{ 'recording-active pulse-red': isRecording }"
         >
           <div class="icon-square mb-1 text-white">
@@ -22,12 +22,25 @@
         </button>
       </div>
       <div class="col-6 text-center">
-        <button class="btn btn-action photo-btn shadow-sm w-100 d-flex flex-column align-items-center justify-content-center py-3 h-100">
+        <button 
+          class="btn btn-action photo-btn shadow-sm w-100 d-flex flex-column align-items-center justify-content-center py-3 h-100"
+          @click="triggerPhotoInput"
+          :disabled="isProcessingVoice || isProcessingImage"
+        >
           <div class="icon-square mb-1 text-white">
-            <i class="bi bi-camera-fill"></i>
+            <i class="bi" :class="isProcessingImage ? 'bi-hourglass-split' : 'bi-camera-fill'"></i>
           </div>
-          <span class="fw-bold text-white smaller">Foto</span>
+          <span class="fw-bold text-white smaller">{{ isProcessingImage ? 'Procesando' : 'Foto' }}</span>
         </button>
+        <!-- Input oculto para cámara/archivos -->
+        <input 
+          type="file" 
+          ref="photoInput" 
+          class="d-none" 
+          accept="image/*" 
+          capture="environment"
+          @change="handlePhotoCapture"
+        />
       </div>
     </div>
 
@@ -114,9 +127,11 @@ const userName = computed(() => {
   return 'Usuario';
 });
 
-// Estado de grabación de voz
+// Estado de grabación de voz e imagen
 const isRecording = ref(false);
 const isProcessingVoice = ref(false);
+const isProcessingImage = ref(false);
+const photoInput = ref(null);
 let recognition = null;
 
 const inboxExpenses = computed(() => {
@@ -205,6 +220,33 @@ const processVoiceText = async (text) => {
     alert("Hubo un error al procesar tu voz con la IA. Por favor, inténtalo de nuevo.");
   } finally {
     isProcessingVoice.value = false;
+  }
+};
+
+// --- Lógica de Imagen ---
+const triggerPhotoInput = () => {
+  if (photoInput.value) {
+    photoInput.value.click();
+  }
+};
+
+const handlePhotoCapture = async (event) => {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  isProcessingImage.value = true;
+  try {
+    await expenseStore.processImageAndSave(file);
+    // Refrescamos la lista para ver el nuevo gasto en el Inbox
+    await expenseStore.fetchExpenses(0, 50);
+    alert("Ticket procesado y enviado al Inbox.");
+  } catch (err) {
+    console.error("Error al procesar imagen con Gemini:", err);
+    alert("No pudimos procesar la imagen del ticket. Asegúrate de que sea clara.");
+  } finally {
+    isProcessingImage.value = false;
+    // Limpiar el input para permitir subir la misma foto si es necesario
+    event.target.value = '';
   }
 };
 

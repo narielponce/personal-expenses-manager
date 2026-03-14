@@ -181,6 +181,7 @@ def create_expense(db: Session, expense: ExpenseCreate, user_id: int, tenant_id:
                     is_installment=True,
                     num_installments=expense.num_installments,
                     installment_amount=installment_amount_per_month,
+                    status=expense.status or "completed",
                     user_id=user_id,
                     tenant_id=tenant_id
                 )

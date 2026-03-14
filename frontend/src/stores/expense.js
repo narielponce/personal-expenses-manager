@@ -64,6 +64,28 @@ export const useExpenseStore = defineStore('expense', {
         this.loading = false;
       }
     },
+    async processImageAndSave(file) {
+      this.loading = true;
+      this.error = null;
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        const response = await apiClient.post('/process-image-and-save', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        });
+        this.expenses.unshift(response.data);
+        return response.data;
+      } catch (error) {
+        this.error = error;
+        console.error('Error processing image and saving:', error);
+        throw error;
+      } finally {
+        this.loading = false;
+      }
+    },
     async createExpense(expense) {
       this.loading = true;
       this.error = null;
