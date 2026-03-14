@@ -7,8 +7,56 @@ from models.account import Account
 from models.recipient import Recipient
 from schemas import UserCreate, TenantCreate, ExpenseCreate, CategoryCreate, AccountCreate, RecipientCreate, AccountUpdate, CategoryUpdate, RecipientUpdate, ExpenseUpdate
 from core.security import get_password_hash
-from datetime import date, timedelta # Import timedelta
-from sqlalchemy import extract, and_ # Import extract, and_
+from datetime import date, timedelta
+from sqlalchemy import extract, and_
+
+# Lista exhaustiva de categorías predefinidas para nuevos usuarios
+DEFAULT_CATEGORIES = [
+    {
+        "name": "Hogar",
+        "sub": ["Alquiler / Hipoteca", "Expensas", "Luz", "Gas", "Agua", "Internet", "Cable / TV", "Reparaciones", "Muebles / Equipamiento"]
+    },
+    {
+        "name": "Alimentación",
+        "sub": ["Supermercado", "Verdulería", "Carnicería", "Restaurante", "Delivery", "Café / snacks"]
+    },
+    {
+        "name": "Transporte",
+        "sub": ["Combustible", "Transporte público", "Uber / Taxi", "Peajes", "Estacionamiento", "Mantenimiento auto", "Seguro auto"]
+    },
+    {
+        "name": "Salud",
+        "sub": ["Farmacia", "Médico", "Estudios", "Odontología", "Obra social / prepaga"]
+    },
+    {
+        "name": "Compras personales",
+        "sub": ["Ropa", "Tecnología", "Electrónica", "Regalos", "Belleza / peluquería"]
+    },
+    {
+        "name": "Entretenimiento",
+        "sub": ["Salidas", "Cine / teatro", "Streaming", "Videojuegos", "Eventos"]
+    },
+    {
+        "name": "Educación",
+        "sub": ["Colegio", "Universidad", "Cursos", "Libros", "Material escolar"]
+    },
+    {
+        "name": "Servicios y suscripciones",
+        "sub": ["Netflix", "Spotify", "Apps", "Software", "Cloud / almacenamiento"]
+    },
+    {
+        "name": "Finanzas",
+        "sub": ["Impuestos", "Comisiones bancarias", "Intereses", "Seguros", "Gastos administrativos"]
+    },
+    {
+        "name": "Ahorro / Inversión",
+        "sub": ["Transferencia a ahorro", "Compra de dólares", "Inversiones", "Criptomonedas", "Plazo fijo"]
+    },
+    {
+        "name": "Ingresos",
+        "sub": ["Sueldo", "Freelance", "Ventas", "Intereses", "Otros ingresos"]
+    }
+]
 
 def get_user_by_email(db: Session, email: str):
     return db.query(User).filter(User.email == email).first()
@@ -16,11 +64,42 @@ def get_user_by_email(db: Session, email: str):
 def get_tenant_by_name(db: Session, name: str):
     return db.query(Tenant).filter(Tenant.name == name).first()
 
+def seed_tenant_categories(db: Session, tenant_id: int):
+    """Carga las categorías por defecto para un nuevo tenant."""
+    for cat_data in DEFAULT_CATEGORIES:
+        # Crear categoría padre
+        db_parent = Category(
+            name=cat_data["name"],
+            tenant_id=tenant_id,
+            parent_id=None
+        )
+        db.add(db_parent)
+        db.flush() 
+        
+        # Crear subcategorías
+        for sub_name in cat_data["sub"]:
+            db_child = Category(
+                name=sub_name,
+                tenant_id=tenant_id,
+                parent_id=db_parent.id
+            )
+            db.add(db_child)
+    
+    try:
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        print(f"Error seeding categories: {e}")
+
 def create_tenant(db: Session, tenant: TenantCreate):
     db_tenant = Tenant(name=tenant.name, schema_name=tenant.name.lower().replace(" ", "_"))
     db.add(db_tenant)
     db.commit()
     db.refresh(db_tenant)
+    
+    # Sembrar categorías iniciales
+    seed_tenant_categories(db, db_tenant.id)
+    
     return db_tenant
 
 def create_user(db: Session, user: UserCreate):
@@ -37,11 +116,10 @@ def create_user(db: Session, user: UserCreate):
     return db_user
 
 def create_category(db: Session, category: CategoryCreate, tenant_id: int):
-    # Modified to include parent_id
     db_category = Category(
         name=category.name,
         tenant_id=tenant_id,
-        parent_id=category.parent_id # Include parent_id
+        parent_id=category.parent_id
     )
     db.add(db_category)
     db.commit()
@@ -49,12 +127,12 @@ def create_category(db: Session, category: CategoryCreate, tenant_id: int):
     return db_category
 
 def get_categories_by_tenant(db: Session, tenant_id: int, skip: int = 0, limit: int = 100):
-    return db.query(Category).filter(Category.tenant_id == tenant_id).offset(skip).limit(limit).all()
+    return db.query(Category).filter(Category.tenant_id == tenant_id).all()
 
 def get_category(db: Session, category_id: int, tenant_id: int):
     return db.query(Category).filter(Category.id == category_id, Category.tenant_id == tenant_id).first()
 
-def update_category(db: Session, category_id: int, category: CategoryUpdate, tenant_id: int): # Changed schema to CategoryUpdate
+def update_category(db: Session, category_id: int, category: CategoryUpdate, tenant_id: int):
     db_category = db.query(Category).filter(Category.id == category_id, Category.tenant_id == tenant_id).first()
     if db_category:
         for key, value in category.model_dump(exclude_unset=True).items():
@@ -66,6 +144,7 @@ def update_category(db: Session, category_id: int, category: CategoryUpdate, ten
 def delete_category(db: Session, category_id: int, tenant_id: int):
     db_category = db.query(Category).filter(Category.id == category_id, Category.tenant_id == tenant_id).first()
     if db_category:
+        # También eliminar o desvincular subcategorías si existieran en cascada
         db.delete(db_category)
         db.commit()
     return db_category
@@ -132,31 +211,23 @@ def delete_recipient(db: Session, recipient_id: int, tenant_id: int):
 def create_expense(db: Session, expense: ExpenseCreate, user_id: int, tenant_id: int):
     expenses_to_create = []
 
-    # Determine initial application date based on account type
     initial_application_date = expense.date
     if expense.account_id:
         account = db.query(Account).filter(Account.id == expense.account_id, Account.tenant_id == tenant_id).first()
         if account and account.is_credit_card:
-            # If it's a credit card, the first application date is the 10th of the next month
             purchase_date = expense.date
-            # Calculate next month
             year = purchase_date.year
             month = purchase_date.month + 1
             if month > 12:
                 month = 1
                 year += 1
-            
-            # Set the day to 10
             initial_application_date = date(year, month, 10)
 
-    # Calculate installment amount if it's an installment
     if expense.is_installment and expense.num_installments and expense.num_installments > 0:
         installment_amount_per_month = round(expense.amount / expense.num_installments, 2)
         
         for i in range(expense.num_installments):
-            # Calculate application_date for each installment
             current_application_date = initial_application_date
-            # For subsequent installments, add months to the initial_application_date
             if i > 0:
                 year = initial_application_date.year + (initial_application_date.month + i - 1) // 12
                 month = (initial_application_date.month + i - 1) % 12 + 1
@@ -172,7 +243,7 @@ def create_expense(db: Session, expense: ExpenseCreate, user_id: int, tenant_id:
                 Expense(
                     description=f"{expense.description} (Cuota {i+1}/{expense.num_installments})",
                     amount=installment_amount_per_month,
-                    date=expense.date, # Original purchase date remains the same for all installments
+                    date=expense.date,
                     application_date=current_application_date,
                     movement_type=expense.movement_type,
                     category_id=expense.category_id,
@@ -187,13 +258,12 @@ def create_expense(db: Session, expense: ExpenseCreate, user_id: int, tenant_id:
                 )
             )
     else:
-        # Not an installment or num_installments is 0/None
         expenses_to_create.append(
             Expense(
                 description=expense.description,
                 amount=expense.amount,
                 date=expense.date,
-                application_date=initial_application_date, # Use initial_application_date here
+                application_date=initial_application_date,
                 movement_type=expense.movement_type,
                 category_id=expense.category_id,
                 account_id=expense.account_id,
@@ -211,12 +281,12 @@ def create_expense(db: Session, expense: ExpenseCreate, user_id: int, tenant_id:
     db.commit()
     for exp in expenses_to_create:
         db.refresh(exp)
-    return expenses_to_create[0] # Return the first created expense
+    return expenses_to_create[0]
 
 def get_expenses_by_user(db: Session, user_id: int, skip: int = 0, limit: int = 100):
     query = db.query(Expense).filter(Expense.user_id == user_id)
     total_count = query.count()
-    expenses = query.order_by(Expense.application_date.desc(), Expense.id.desc()).offset(skip).limit(limit).all()
+    expenses = query.order_by(Expense.date.desc(), Expense.id.desc()).offset(skip).limit(limit).all()
     return expenses, total_count
 
 def get_expense(db: Session, expense_id: int, tenant_id: int):
@@ -225,18 +295,16 @@ def get_expense(db: Session, expense_id: int, tenant_id: int):
 def update_expense(db: Session, expense_id: int, expense: ExpenseUpdate, tenant_id: int):
     db_expense = db.query(Expense).filter(Expense.id == expense_id, Expense.tenant_id == tenant_id).first()
     if db_expense:
-        # Update fields that are provided
         for key, value in expense.model_dump(exclude_unset=True).items():
-            if key in ["installment_amount"]: # installment_amount is a derived field, not directly updated
+            if key in ["installment_amount"]:
                 continue
             setattr(db_expense, key, value)
         
-        # Recalculate installment_amount if num_installments or amount changed and it's an installment
         if db_expense.is_installment and db_expense.num_installments and db_expense.num_installments > 0:
             if expense.amount is not None or expense.num_installments is not None:
                 db_expense.installment_amount = round(db_expense.amount / db_expense.num_installments, 2)
         else:
-            db_expense.installment_amount = None # Not an installment
+            db_expense.installment_amount = None
 
         db.commit()
         db.refresh(db_expense)
@@ -291,6 +359,5 @@ def get_expenses_by_tenant(
             query = query.filter(extract('year', Expense.application_date) == year)
 
     total_count = query.count()
-    # Ordenamos por fecha de compra descendente y por ID descendente para garantizar que lo nuevo aparezca primero
     expenses = query.order_by(Expense.date.desc(), Expense.id.desc()).offset(skip).limit(limit).all()
     return expenses, total_count

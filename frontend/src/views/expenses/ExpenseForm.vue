@@ -191,6 +191,14 @@
         </div>
       </div>
     </div>
+
+    <!-- Success Toast -->
+    <Transition name="fade">
+      <div v-if="showSuccessToast" class="success-toast shadow-sm rounded-pill py-2 px-4 bg-success text-white d-flex align-items-center gap-2">
+        <i class="bi bi-check-circle-fill"></i>
+        <span class="fw-bold tiny">Movimiento guardado</span>
+      </div>
+    </Transition>
   </div>
 </template>
 
@@ -225,6 +233,7 @@ const isEditMode = computed(() => route.params.id !== undefined);
 // Estado de UI de los collapsibles (Abiertos por defecto para reducir taps)
 const showAccount = ref(true);
 const showDetails = ref(true);
+const showSuccessToast = ref(false);
 
 const expense = ref({
   description: '',
@@ -345,7 +354,10 @@ const handleSubmit = async () => {
       router.push(redirectTo);
     } else {
       resetForm(); // Limpiar después de guardar si es carga rápida
-      alert("Movimiento guardado con éxito.");
+      showSuccessToast.value = true;
+      setTimeout(() => {
+        showSuccessToast.value = false;
+      }, 2000);
     }
   } catch (err) {
     console.error('No se pudo guardar el movimiento:', err);
@@ -437,5 +449,23 @@ const closeModal = (modalId) => {
 input:focus, select:focus {
   box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
   background-color: white !important;
+}
+
+/* Estilos para el Toast */
+.success-toast {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2000;
+}
+
+.fade-enter-active, .fade-leave-active {
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.fade-enter-from, .fade-leave-to {
+  opacity: 0;
+  transform: translateX(-50%) translateY(20px);
 }
 </style>

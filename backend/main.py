@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
-from routers import auth, expenses, categories, accounts, recipients, voice
+from routers import auth, expenses, categories, accounts, recipients, voice, backup
 import logging
 
 # Configure logging
@@ -28,6 +28,7 @@ app.include_router(categories.router, tags=["categories"])
 app.include_router(accounts.router, tags=["accounts"])
 app.include_router(recipients.router, tags=["recipients"])
 app.include_router(voice.router, tags=["voice"])
+app.include_router(backup.router, prefix="/backup", tags=["backup"])
 
 @app.get("/")
 def read_root():

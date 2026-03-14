@@ -104,6 +104,14 @@
       </div>
       <h4 class="fw-bold mb-0 mt-1">{{ formatCurrency(totalSpent) }}</h4>
     </div>
+
+    <!-- Success Toast -->
+    <Transition name="fade">
+      <div v-if="showSuccessToast" class="success-toast shadow-sm rounded-pill py-2 px-4 bg-success text-white d-flex align-items-center gap-2">
+        <i class="bi bi-check-circle-fill"></i>
+        <span class="fw-bold tiny">{{ toastMessage }}</span>
+      </div>
+    </Transition>
   </div>
 </template>
 
@@ -131,6 +139,8 @@ const userName = computed(() => {
 const isRecording = ref(false);
 const isProcessingVoice = ref(false);
 const isProcessingImage = ref(false);
+const showSuccessToast = ref(false);
+const toastMessage = ref('');
 const photoInput = ref(null);
 let recognition = null;
 
@@ -214,7 +224,14 @@ const processVoiceText = async (text) => {
     await expenseStore.processVoiceAndSave(text);
     // Refrescamos para ver el nuevo gasto en el Inbox del Home
     await expenseStore.fetchExpenses(0, 50);
-    alert("Gasto procesado y enviado al Inbox.");
+    
+    // Mostrar Toast en lugar de Alert
+    toastMessage.value = "Gasto enviado al Inbox";
+    showSuccessToast.value = true;
+    setTimeout(() => {
+      showSuccessToast.value = false;
+    }, 2000);
+
   } catch (err) {
     console.error("Error al procesar voz con Gemini:", err);
     alert("Hubo un error al procesar tu voz con la IA. Por favor, inténtalo de nuevo.");
@@ -239,7 +256,14 @@ const handlePhotoCapture = async (event) => {
     await expenseStore.processImageAndSave(file);
     // Refrescamos la lista para ver el nuevo gasto en el Inbox
     await expenseStore.fetchExpenses(0, 50);
-    alert("Ticket procesado y enviado al Inbox.");
+    
+    // Mostrar Toast en lugar de Alert
+    toastMessage.value = "Ticket enviado al Inbox";
+    showSuccessToast.value = true;
+    setTimeout(() => {
+      showSuccessToast.value = false;
+    }, 2000);
+
   } catch (err) {
     console.error("Error al procesar imagen con Gemini:", err);
     alert("No pudimos procesar la imagen del ticket. Asegúrate de que sea clara.");
@@ -342,5 +366,23 @@ onMounted(async () => {
 
 .min-width-0 {
   min-width: 0;
+}
+
+/* Estilos para el Toast */
+.success-toast {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2000;
+}
+
+.fade-enter-active, .fade-leave-active {
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.fade-enter-from, .fade-leave-to {
+  opacity: 0;
+  transform: translateX(-50%) translateY(20px);
 }
 </style>
