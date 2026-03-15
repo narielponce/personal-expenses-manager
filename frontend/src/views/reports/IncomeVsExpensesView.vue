@@ -49,58 +49,87 @@
     </div>
 
     <div v-else>
-      <!-- Cards de Resumen -->
-      <div class="row g-2 mb-4">
-        <div class="col-6">
-          <div class="card border-0 bg-success text-white rounded-4 shadow-sm p-3">
-            <span class="tiny opacity-75 fw-bold text-uppercase">Ingresos</span>
-            <h5 class="fw-bold mb-0 mt-1">{{ formatCurrency(balanceData.total_income) }}</h5>
+      <!-- Selector de Vista (Pill Toggle) -->
+      <div class="view-toggle d-flex justify-content-center mb-4">
+        <div class="bg-light p-1 rounded-pill d-flex shadow-sm">
+          <button 
+            class="btn btn-sm rounded-pill px-3 tiny fw-bold transition-all"
+            :class="viewMode === 'visual' ? 'btn-primary shadow-sm' : 'btn-light text-muted'"
+            @click="viewMode = 'visual'"
+          >
+            VISUAL
+          </button>
+          <button 
+            class="btn btn-sm rounded-pill px-3 tiny fw-bold transition-all"
+            :class="viewMode === 'summary' ? 'btn-primary shadow-sm' : 'btn-light text-muted'"
+            @click="viewMode = 'summary'"
+          >
+            RESUMEN
+          </button>
+        </div>
+      </div>
+
+      <!-- VISTA 1: VISUAL (Gráfico + Proporciones) -->
+      <div v-if="viewMode === 'visual'">
+        <!-- Gráfico de Barras -->
+        <div class="card border-0 shadow-sm rounded-4 mb-4 p-3 bg-white">
+          <div style="max-height: 250px; position: relative;" class="d-flex justify-content-center">
+            <Bar :data="chartData" :options="chartOptions" />
           </div>
         </div>
-        <div class="col-6">
-          <div class="card border-0 bg-danger text-white rounded-4 shadow-sm p-3">
-            <span class="tiny opacity-75 fw-bold text-uppercase">Gastos</span>
-            <h5 class="fw-bold mb-0 mt-1">{{ formatCurrency(balanceData.total_expense) }}</h5>
+
+        <!-- Comparativa Proporcional -->
+        <div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
+          <h6 class="fw-bold smaller text-dark mb-4 text-center">Volumen de Movimientos</h6>
+          <div class="d-flex flex-column gap-4">
+            <div>
+              <div class="d-flex justify-content-between mb-1">
+                <span class="tiny fw-bold text-muted text-uppercase">Ingresos</span>
+                <span class="tiny fw-bold text-success">{{ incomePercentage }}%</span>
+              </div>
+              <div class="progress-container rounded-pill bg-light" style="height: 12px;">
+                <div class="progress-bar rounded-pill bg-success" :style="{ width: incomePercentage + '%' }"></div>
+              </div>
+            </div>
+            <div>
+              <div class="d-flex justify-content-between mb-1">
+                <span class="tiny fw-bold text-muted text-uppercase">Gastos</span>
+                <span class="tiny fw-bold text-danger">{{ expensePercentage }}%</span>
+              </div>
+              <div class="progress-container rounded-pill bg-light" style="height: 12px;">
+                <div class="progress-bar rounded-pill bg-danger" :style="{ width: expensePercentage + '%' }"></div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- Balance Card -->
-      <div class="card border-0 shadow-sm rounded-4 mb-4 overflow-hidden" :class="balanceData.balance >= 0 ? 'bg-primary-subtle' : 'bg-danger-subtle'">
-        <div class="card-body p-3 text-center">
-          <span class="tiny fw-bold text-uppercase" :class="balanceData.balance >= 0 ? 'text-primary' : 'text-danger'">Balance Neto</span>
-          <h3 class="fw-bold mb-0" :class="balanceData.balance >= 0 ? 'text-primary' : 'text-danger'">{{ formatCurrency(balanceData.balance) }}</h3>
-          <p class="tiny mb-0 mt-1 fw-medium" :class="balanceData.balance >= 0 ? 'text-primary' : 'text-danger'">
-            {{ balanceData.balance >= 0 ? '¡Vas por buen camino!' : 'Tus gastos superaron tus ingresos' }}
-          </p>
-        </div>
-      </div>
-
-      <!-- Comparativa Visual -->
-      <div class="card border-0 shadow-sm rounded-4 p-4 mb-2">
-        <h6 class="fw-bold smaller text-dark mb-4 text-center">Comparativa Proporcional</h6>
-        
-        <div class="d-flex flex-column gap-4">
-          <!-- Barra Ingresos -->
-          <div>
-            <div class="d-flex justify-content-between mb-1">
-              <span class="tiny fw-bold text-muted">INGRESOS</span>
-              <span class="tiny fw-bold text-success">{{ incomePercentage }}%</span>
-            </div>
-            <div class="progress-container rounded-pill bg-light" style="height: 12px;">
-              <div class="progress-bar rounded-pill bg-success" :style="{ width: incomePercentage + '%' }"></div>
+      <!-- VISTA 2: RESUMEN (Cards de Totales) -->
+      <div v-else class="summary-view">
+        <!-- Cards de Resumen -->
+        <div class="row g-2 mb-3">
+          <div class="col-6">
+            <div class="card border-0 bg-success text-white rounded-4 shadow-sm p-3">
+              <span class="tiny opacity-75 fw-bold text-uppercase">Ingresos</span>
+              <h5 class="fw-bold mb-0 mt-1">{{ formatCurrency(balanceData.total_income) }}</h5>
             </div>
           </div>
+          <div class="col-6">
+            <div class="card border-0 bg-danger text-white rounded-4 shadow-sm p-3">
+              <span class="tiny opacity-75 fw-bold text-uppercase">Gastos</span>
+              <h5 class="fw-bold mb-0 mt-1">{{ formatCurrency(balanceData.total_expense) }}</h5>
+            </div>
+          </div>
+        </div>
 
-          <!-- Barra Gastos -->
-          <div>
-            <div class="d-flex justify-content-between mb-1">
-              <span class="tiny fw-bold text-muted">GASTOS</span>
-              <span class="tiny fw-bold text-danger">{{ expensePercentage }}%</span>
-            </div>
-            <div class="progress-container rounded-pill bg-light" style="height: 12px;">
-              <div class="progress-bar rounded-pill bg-danger" :style="{ width: expensePercentage + '%' }"></div>
-            </div>
+        <!-- Balance Card -->
+        <div class="card border-0 shadow-sm rounded-4 mb-4 overflow-hidden" :class="balanceData.balance >= 0 ? 'bg-primary-subtle' : 'bg-danger-subtle'">
+          <div class="card-body p-3 text-center">
+            <span class="tiny fw-bold text-uppercase" :class="balanceData.balance >= 0 ? 'text-primary' : 'text-danger'">Balance Neto</span>
+            <h3 class="fw-bold mb-0" :class="balanceData.balance >= 0 ? 'text-primary' : 'text-danger'">{{ formatCurrency(balanceData.balance) }}</h3>
+            <p class="tiny mb-0 mt-1 fw-medium" :class="balanceData.balance >= 0 ? 'text-primary' : 'text-danger'">
+              {{ balanceData.balance >= 0 ? '¡Vas por buen camino!' : 'Tus gastos superaron tus ingresos' }}
+            </p>
           </div>
         </div>
       </div>
@@ -111,11 +140,17 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue';
 import apiClient from '@/api';
+import { Bar } from 'vue-chartjs';
+import { Chart as ChartJS, Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale } from 'chart.js';
+
+// Registrar componentes de Chart.js
+ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale);
 
 const loading = ref(false);
 const error = ref(null);
 const balanceData = ref({ total_income: 0, total_expense: 0, balance: 0 });
 const showFilters = ref(false);
+const viewMode = ref('visual'); // 'visual' | 'summary'
 
 const selectedMonth = ref(new Date().getMonth() + 1);
 const selectedYear = ref(new Date().getFullYear());
@@ -125,6 +160,65 @@ const years = computed(() => {
   const currentYear = new Date().getFullYear();
   return [currentYear, currentYear - 1, currentYear - 2];
 });
+
+// Configuración de Chart.js
+const chartData = computed(() => {
+  return {
+    labels: ['Balance Mensual'],
+    datasets: [
+      {
+        label: 'Ingresos',
+        backgroundColor: '#198754',
+        data: [balanceData.value.total_income],
+        borderRadius: 8,
+      },
+      {
+        label: 'Gastos',
+        backgroundColor: '#dc3545',
+        data: [balanceData.value.total_expense],
+        borderRadius: 8,
+      }
+    ]
+  };
+});
+
+const chartOptions = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: {
+      position: 'bottom',
+      labels: {
+        usePointStyle: true,
+        padding: 20,
+        font: { size: 11, weight: 'bold' }
+      }
+    },
+    tooltip: {
+      callbacks: {
+        label: function(context) {
+          let label = context.dataset.label || '';
+          if (label) label += ': ';
+          if (context.parsed.y !== null) {
+            label += new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'USD' }).format(context.parsed.y);
+          }
+          return label;
+        }
+      }
+    }
+  },
+  scales: {
+    y: {
+      beginAtZero: true,
+      grid: { display: false },
+      ticks: { font: { size: 10 } }
+    },
+    x: {
+      grid: { display: false },
+      ticks: { display: false }
+    }
+  }
+};
 
 const grandTotalVolume = computed(() => {
   return balanceData.value.total_income + balanceData.value.total_expense;
@@ -181,4 +275,5 @@ onMounted(fetchData);
 .bg-danger-subtle { background-color: #f8d7da !important; }
 .bg-success-subtle { background-color: #d1e7dd !important; }
 .card { width: 100%; }
+.transition-all { transition: all 0.3s ease; }
 </style>

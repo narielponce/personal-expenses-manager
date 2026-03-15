@@ -283,17 +283,77 @@ def get_expense(db: Session, expense_id: int, tenant_id: int):
 
 def update_expense(db: Session, expense_id: int, expense: ExpenseUpdate, tenant_id: int):
     db_expense = db.query(Expense).filter(Expense.id == expense_id, Expense.tenant_id == tenant_id).first()
-    if db_expense:
-        for key, value in expense.model_dump(exclude_unset=True).items():
-            if key in ["installment_amount"]: continue
-            setattr(db_expense, key, value)
-        if db_expense.is_installment and db_expense.num_installments and db_expense.num_installments > 0:
-            if expense.amount is not None or expense.num_installments is not None:
-                db_expense.installment_amount = round(db_expense.amount / db_expense.num_installments, 2)
-        else:
-            db_expense.installment_amount = None
-        db.commit()
-        db.refresh(db_expense)
+    if not db_expense:
+        return None
+
+    # Guardamos el estado anterior para detectar cambios críticos
+    was_installment = db_expense.is_installment
+    
+    # Actualizamos los campos básicos
+    for key, value in expense.model_dump(exclude_unset=True).items():
+        if key in ["installment_amount"]: continue
+        setattr(db_expense, key, value)
+    
+    # Lógica de Cuotas
+    if db_expense.is_installment and db_expense.num_installments and db_expense.num_installments > 1:
+        # Recalcular monto de cuota
+        db_expense.installment_amount = round(db_expense.amount / db_expense.num_installments, 2)
+        
+        # CASO ESPECIAL: Si antes NO era cuota y ahora SÍ es (Conversión desde Inbox)
+        if not was_installment:
+            # 1. Ajustar el registro actual como la "Cuota 1"
+            db_expense.description = f"{db_expense.description} (Cuota 1/{db_expense.num_installments})"
+            db_expense.amount = db_expense.installment_amount
+            
+            # 2. Calcular la fecha de aplicación inicial (reutilizando lógica de create_expense)
+            initial_app_date = db_expense.application_date
+            # Si el usuario cambió la cuenta a una de crédito en esta misma edición
+            if db_expense.account_id:
+                account = db.query(Account).filter(Account.id == db_expense.account_id, Account.tenant_id == tenant_id).first()
+                if account and account.is_credit_card:
+                    # Forzamos la lógica de tarjeta si no se había aplicado
+                    purchase_date = db_expense.date
+                    year = purchase_date.year
+                    month = purchase_date.month + 1
+                    if month > 12:
+                        month = 1
+                        year += 1
+                    initial_app_date = date(year, month, 10)
+                    db_expense.application_date = initial_app_date
+
+            # 3. Crear las cuotas restantes (2 a N)
+            for i in range(1, db_expense.num_installments):
+                year = initial_app_date.year + (initial_app_date.month + i - 1) // 12
+                month = (initial_app_date.month + i - 1) % 12 + 1
+                day = initial_app_date.day
+                try:
+                    current_app_date = date(year, month, day)
+                except ValueError:
+                    temp_date = date(year, month + 1 if month < 12 else 1, 1) - timedelta(days=1)
+                    current_app_date = date(year, month, temp_date.day)
+
+                new_installment = Expense(
+                    description=f"{expense.description or db_expense.description.split(' (Cuota')[0]} (Cuota {i+1}/{db_expense.num_installments})",
+                    amount=db_expense.installment_amount,
+                    date=db_expense.date,
+                    application_date=current_app_date,
+                    movement_type=db_expense.movement_type,
+                    category_id=db_expense.category_id,
+                    account_id=db_expense.account_id,
+                    recipient_id=db_expense.recipient_id,
+                    is_installment=True,
+                    num_installments=db_expense.num_installments,
+                    installment_amount=db_expense.installment_amount,
+                    status=db_expense.status, # Hereda el estado (probablemente 'completed' si viene del form)
+                    user_id=db_expense.user_id,
+                    tenant_id=tenant_id
+                )
+                db.add(new_installment)
+    else:
+        db_expense.installment_amount = None
+
+    db.commit()
+    db.refresh(db_expense)
     return db_expense
 
 def delete_expense(db: Session, expense_id: int, tenant_id: int):
