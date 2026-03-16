@@ -369,6 +369,12 @@ def get_expenses_by_tenant(db: Session, tenant_id: int, skip: int = 0, limit: in
     if filters.get("status"): query = query.filter(Expense.status == filters["status"])
     if filters.get("month"): query = query.filter(extract('month', Expense.application_date) == filters["month"])
     if filters.get("year"): query = query.filter(extract('year', Expense.application_date) == filters["year"])
+    if filters.get("account_id"): query = query.filter(Expense.account_id == filters["account_id"])
+    if filters.get("category_id"): query = query.filter(Expense.category_id == filters["category_id"])
+    if filters.get("recipient_id"): query = query.filter(Expense.recipient_id == filters["recipient_id"])
+    if filters.get("start_date"): query = query.filter(Expense.date >= filters["start_date"])
+    if filters.get("end_date"): query = query.filter(Expense.date <= filters["end_date"])
+    
     total_count = query.count()
     expenses = query.order_by(Expense.date.desc(), Expense.id.desc()).offset(skip).limit(limit).all()
     return expenses, total_count
