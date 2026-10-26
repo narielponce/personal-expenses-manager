@@ -70,34 +70,14 @@ jobs:
           port: ${{ secrets.DROPLET_PORT || 22 }}
           script: |
             set -e
-            echo "🚀 Starting deployment on Droplet..."
+            echo "🚀 Conectando al Droplet y accediendo a ${{ secrets.APP_DIR }}..."
             cd ${{ secrets.APP_DIR }}
 
-            echo "📥 Fetching latest configuration files..."
-            git pull origin main || (git fetch origin main && git reset --hard origin/main)
-
-            echo "🔑 Authenticating Docker with GHCR (if credentials provided)..."
+            echo "🔑 Autenticando Docker con GHCR (si hay credenciales)..."
             if [ -n "${{ secrets.GHCR_PAT }}" ]; then
               echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             fi
 
-            # Check for docker compose plugin or standalone docker-compose
-            if docker compose version >/dev/null 2>&1; then
-              COMPOSE_CMD="docker compose"
-            else
-              COMPOSE_CMD="docker-compose"
-            fi
-
-            echo "📦 Pulling pre-built images from GHCR..."
-            $COMPOSE_CMD -f docker-compose.prod.yml pull
-
-            echo "🔄 Starting updated containers..."
-            $COMPOSE_CMD -f docker-compose.prod.yml up -d --remove-orphans
-
-            echo "🗄️ Running database migrations..."
-            $COMPOSE_CMD -f docker-compose.prod.yml exec -T backend alembic upgrade head
-
-            echo "🧹 Cleaning up old/dangling images..."
-            docker image prune -f
-
-            echo "✅ Deployment finished successfully!"
+            echo "▶️ Ejecutando deploy.sh..."
+            chmod +x deploy.sh
+            ./deploy.sh
