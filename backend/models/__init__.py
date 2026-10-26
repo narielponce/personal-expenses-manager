@@ -4,3 +4,4 @@ from .expense import Expense
 from .category import Category
 from .account import Account
 from .recipient import Recipient
+from .budget import Budget

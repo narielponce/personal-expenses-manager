@@ -109,6 +109,9 @@ class ExpenseBase(BaseModel):
     is_installment: Optional[bool] = False
     num_installments: Optional[int] = None
     status: Optional[str] = "completed"
+    is_recurring: Optional[bool] = False
+    payment_method: Optional[str] = None
+    installments: Optional[int] = 1
 
 
 class ExpenseCreate(ExpenseBase):
@@ -135,8 +138,42 @@ class ExpenseUpdate(BaseModel):
     is_installment: Optional[bool] = None
     num_installments: Optional[int] = None
     status: Optional[str] = None
+    is_recurring: Optional[bool] = None
+    payment_method: Optional[str] = None
+    installments: Optional[int] = None
 
 # Paginated Expense Schemas
 class PaginatedExpenses(BaseModel):
     expenses: List[Expense]
     total_count: int
+
+# Budget Schemas
+class BudgetBase(BaseModel):
+    category_id: int
+    month: int
+    year: int
+    allocated_amount: float
+
+class BudgetCreate(BudgetBase):
+    pass
+
+class BudgetUpdate(BaseModel):
+    allocated_amount: Optional[float] = None
+    month: Optional[int] = None
+    year: Optional[int] = None
+    category_id: Optional[int] = None
+
+class Budget(BudgetBase):
+    id: int
+    user_id: int
+    tenant_id: int
+    created_at: Optional[datetime.datetime] = None
+
+    class Config:
+        from_attributes = True
+
+class BudgetResponse(Budget):
+    category_name: Optional[str] = None
+    spent_amount: Optional[float] = 0.0
+    percentage_spent: Optional[float] = 0.0
+

@@ -69,7 +69,7 @@
                 </div>
               </div>
 
-              <div v-if="selectedAccountIsCreditCard" class="row g-2 align-items-center">
+              <div v-if="selectedAccountIsCreditCard" class="row g-2 align-items-center mb-2">
                 <div class="col-4">
                   <label for="numInstallments" class="form-label mb-0 tiny text-muted fw-bold text-uppercase">Cuotas:</label>
                 </div>
@@ -79,6 +79,37 @@
                   </select>
                   <div v-if="expense.num_installments > 1" class="text-primary tiny fw-bold mt-1 px-1">
                     de {{ formatCurrency(installmentValue) }} cada una
+                  </div>
+                </div>
+              </div>
+
+              <!-- Medio de Pago -->
+              <div class="row g-2 mb-2 align-items-center">
+                <div class="col-4">
+                  <label for="paymentMethod" class="form-label mb-0 tiny text-muted fw-bold text-uppercase">Medio Pago:</label>
+                </div>
+                <div class="col-8">
+                  <select class="form-select form-select-sm border-0 bg-white rounded-3 py-1" id="paymentMethod" v-model="expense.payment_method">
+                    <option :value="null">Seleccionar...</option>
+                    <option value="Efectivo">Efectivo</option>
+                    <option value="Débito">Débito</option>
+                    <option value="Crédito">Crédito</option>
+                    <option value="Transferencia">Transferencia</option>
+                    <option value="Mercado Pago">Mercado Pago</option>
+                    <option value="Otro">Otro</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Gasto Recurrente / Fijo -->
+              <div class="row g-2 align-items-center">
+                <div class="col-4">
+                  <label class="form-label mb-0 tiny text-muted fw-bold text-uppercase">Recurrente:</label>
+                </div>
+                <div class="col-8">
+                  <div class="form-check form-switch mb-0">
+                    <input class="form-check-input" type="checkbox" id="isRecurring" v-model="expense.is_recurring">
+                    <label class="form-check-label tiny text-muted" for="isRecurring">Gasto fijo mensual</label>
                   </div>
                 </div>
               </div>
@@ -250,7 +281,10 @@ const expense = ref({
   is_installment: false,
   num_installments: null,
   installment_amount: null,
-  status: 'completed'
+  status: 'completed',
+  is_recurring: false,
+  payment_method: null,
+  installments: 1
 });
 
 const loading = computed(() => expenseStore.loading || categoryStore.loading || accountStore.loading || recipientStore.loading);
@@ -351,6 +385,9 @@ const resetForm = () => {
     num_installments: null,
     installment_amount: null,
     status: 'completed',
+    is_recurring: false,
+    payment_method: null,
+    installments: 1,
   };
 };
 

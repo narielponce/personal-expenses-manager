@@ -5,7 +5,8 @@ from models.expense import Expense
 from models.category import Category
 from models.account import Account
 from models.recipient import Recipient
-from schemas import UserCreate, TenantCreate, ExpenseCreate, CategoryCreate, AccountCreate, RecipientCreate, AccountUpdate, CategoryUpdate, RecipientUpdate, ExpenseUpdate
+from models.budget import Budget
+from schemas import UserCreate, TenantCreate, ExpenseCreate, CategoryCreate, AccountCreate, RecipientCreate, AccountUpdate, CategoryUpdate, RecipientUpdate, ExpenseUpdate, BudgetCreate, BudgetUpdate
 from core.security import get_password_hash
 from datetime import date, timedelta
 from sqlalchemy import extract, and_
@@ -225,6 +226,9 @@ def create_expense(db: Session, expense: ExpenseCreate, user_id: int, tenant_id:
                     num_installments=expense.num_installments,
                     installment_amount=installment_amount_per_month,
                     status=expense.status or "completed",
+                    is_recurring=expense.is_recurring or False,
+                    payment_method=expense.payment_method,
+                    installments=expense.installments or expense.num_installments or 1,
                     user_id=user_id,
                     tenant_id=tenant_id
                 )
@@ -244,6 +248,9 @@ def create_expense(db: Session, expense: ExpenseCreate, user_id: int, tenant_id:
                 num_installments=None,
                 installment_amount=None,
                 status=expense.status or "completed",
+                is_recurring=expense.is_recurring or False,
+                payment_method=expense.payment_method,
+                installments=expense.installments or 1,
                 user_id=user_id,
                 tenant_id=tenant_id
             )
@@ -452,3 +459,52 @@ def get_expenses_by_category(db: Session, tenant_id: int, month: int, year: int,
             })
 
     return sorted(report_data, key=lambda x: x["total"], reverse=True)
+
+
+# Budget CRUD
+def get_budgets(db: Session, tenant_id: int, month: int, year: int):
+    return db.query(Budget).filter(
+        Budget.tenant_id == tenant_id,
+        Budget.month == month,
+        Budget.year == year
+    ).all()
+
+
+def get_budget_by_category(db: Session, tenant_id: int, category_id: int, month: int, year: int):
+    return db.query(Budget).filter(
+        Budget.tenant_id == tenant_id,
+        Budget.category_id == category_id,
+        Budget.month == month,
+        Budget.year == year
+    ).first()
+
+
+def create_or_update_budget(db: Session, budget_in: BudgetCreate, user_id: int, tenant_id: int):
+    existing = get_budget_by_category(db, tenant_id, budget_in.category_id, budget_in.month, budget_in.year)
+    if existing:
+        existing.allocated_amount = budget_in.allocated_amount
+        db.commit()
+        db.refresh(existing)
+        return existing
+    new_budget = Budget(
+        user_id=user_id,
+        tenant_id=tenant_id,
+        category_id=budget_in.category_id,
+        month=budget_in.month,
+        year=budget_in.year,
+        allocated_amount=budget_in.allocated_amount
+    )
+    db.add(new_budget)
+    db.commit()
+    db.refresh(new_budget)
+    return new_budget
+
+
+def delete_budget(db: Session, budget_id: int, tenant_id: int):
+    budget = db.query(Budget).filter(Budget.id == budget_id, Budget.tenant_id == tenant_id).first()
+    if budget:
+        db.delete(budget)
+        db.commit()
+        return True
+    return False
+

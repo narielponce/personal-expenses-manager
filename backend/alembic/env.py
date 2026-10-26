@@ -24,6 +24,7 @@ fileConfig(config.config_file_name)
 from models.user import Base as UserBase
 from models.tenant import Base as TenantBase
 from database import Base # Import Base from database.py which should be the same as the one in models
+import models
 
 target_metadata = Base.metadata
 
