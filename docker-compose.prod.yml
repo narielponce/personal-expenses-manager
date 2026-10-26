@@ -2,9 +2,7 @@
 
 services:
   backend:
-    build:
-      context: .
-      dockerfile: Dockerfile.backend
+    image: ghcr.io/${GHCR_OWNER:-narielponce}/expenses-backend:latest
     container_name: finances_backend
     restart: always
     expose:
@@ -13,12 +11,14 @@ services:
       - expenses_network
     environment:
       ENV: docker
-      DATABASE_URL: postgresql://user:password@db:5432/finances
+      DATABASE_URL: ${DATABASE_URL:-postgresql://user:password@db:5432/finances}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      SECRET_KEY: ${SECRET_KEY:-your-secret-key}
+    depends_on:
+      - db
 
   frontend:
-    build:
-      context: .
-      dockerfile: Dockerfile.frontend
+    image: ghcr.io/${GHCR_OWNER:-narielponce}/expenses-frontend:latest
     container_name: finances_frontend
     restart: always
     expose:
@@ -33,9 +33,9 @@ services:
     container_name: finances_db
     restart: always
     environment:
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: finances
+      POSTGRES_USER: ${POSTGRES_USER:-user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+      POSTGRES_DB: ${POSTGRES_DB:-finances}
     volumes:
       - finances_pgdata:/var/lib/postgresql/data
     networks:
@@ -47,4 +47,3 @@ volumes:
 networks:
   expenses_network:
     name: expenses_network
-
