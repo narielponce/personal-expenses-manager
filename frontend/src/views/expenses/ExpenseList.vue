@@ -79,8 +79,8 @@
                 
                 <!-- Icono Tipo simplificado -->
                 <div class="flex-shrink-0">
-                  <div class="inbox-icon rounded-circle d-flex align-items-center justify-content-center" :class="expense.movement_type === 'expense' ? 'bg-danger-subtle' : 'bg-success-subtle'" style="width: 28px; height: 28px;">
-                    <i class="bi tiny" :class="[expense.movement_type === 'expense' ? 'bi-arrow-down-left text-danger' : 'bi-arrow-up-right text-success']"></i>
+                  <div class="inbox-icon rounded-circle d-flex align-items-center justify-content-center" :class="expense.movement_type === 'expense' ? 'bg-danger-subtle' : (expense.movement_type === 'transfer' ? 'bg-info-subtle' : 'bg-success-subtle')" style="width: 28px; height: 28px;">
+                    <i class="bi tiny" :class="expense.movement_type === 'expense' ? 'bi-arrow-down-left text-danger' : (expense.movement_type === 'transfer' ? 'bi-arrow-left-right text-info' : 'bi-arrow-up-right text-success')"></i>
                   </div>
                 </div>
 
@@ -112,8 +112,8 @@
 
                     <div class="d-flex align-items-center gap-2">
                       <!-- Importe -->
-                      <span class="fw-bold expense-amount me-1" :class="expense.movement_type === 'expense' ? 'text-danger' : 'text-success'">
-                        {{ expense.movement_type === 'expense' ? '-' : '+' }}{{ formatCurrency(expense.amount) }}
+                      <span class="fw-bold expense-amount me-1" :class="expense.movement_type === 'expense' ? 'text-danger' : (expense.movement_type === 'transfer' ? 'text-info' : 'text-success')">
+                        {{ expense.movement_type === 'expense' ? '-' : (expense.movement_type === 'transfer' ? '⇄ ' : '+') }}{{ formatCurrency(expense.amount) }}
                       </span>
                       
                       <!-- Acciones discretas -->

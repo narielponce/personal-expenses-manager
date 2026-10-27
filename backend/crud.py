@@ -9,7 +9,7 @@ from models.budget import Budget
 from schemas import UserCreate, TenantCreate, ExpenseCreate, CategoryCreate, AccountCreate, RecipientCreate, AccountUpdate, CategoryUpdate, RecipientUpdate, ExpenseUpdate, BudgetCreate, BudgetUpdate
 from core.security import get_password_hash
 from datetime import date, timedelta
-from sqlalchemy import extract, and_
+from sqlalchemy import extract, and_, or_
 
 # Lista exhaustiva de categorías predefinidas para nuevos usuarios
 DEFAULT_CATEGORIES = [
@@ -140,7 +140,7 @@ def get_accounts_by_tenant(db: Session, tenant_id: int, skip: int = 0, limit: in
 def get_account(db: Session, account_id: int, tenant_id: int):
     return db.query(Account).filter(Account.id == account_id, Account.tenant_id == tenant_id).first()
 
-def update_account(db: Session, account_id: int, account: AccountCreate, tenant_id: int):
+def update_account(db: Session, account_id: int, account: AccountUpdate, tenant_id: int):
     db_account = db.query(Account).filter(Account.id == account_id, Account.tenant_id == tenant_id).first()
     if db_account:
         for key, value in account.model_dump(exclude_unset=True).items():
@@ -221,6 +221,7 @@ def create_expense(db: Session, expense: ExpenseCreate, user_id: int, tenant_id:
                     movement_type=expense.movement_type,
                     category_id=expense.category_id,
                     account_id=expense.account_id,
+                    destination_account_id=expense.destination_account_id,
                     recipient_id=expense.recipient_id,
                     is_installment=True,
                     num_installments=expense.num_installments,
@@ -243,6 +244,7 @@ def create_expense(db: Session, expense: ExpenseCreate, user_id: int, tenant_id:
                 movement_type=expense.movement_type,
                 category_id=expense.category_id,
                 account_id=expense.account_id,
+                destination_account_id=expense.destination_account_id,
                 recipient_id=expense.recipient_id,
                 is_installment=False,
                 num_installments=None,
@@ -347,6 +349,7 @@ def update_expense(db: Session, expense_id: int, expense: ExpenseUpdate, tenant_
                     movement_type=db_expense.movement_type,
                     category_id=db_expense.category_id,
                     account_id=db_expense.account_id,
+                    destination_account_id=db_expense.destination_account_id,
                     recipient_id=db_expense.recipient_id,
                     is_installment=True,
                     num_installments=db_expense.num_installments,
@@ -376,7 +379,9 @@ def get_expenses_by_tenant(db: Session, tenant_id: int, skip: int = 0, limit: in
     if filters.get("status"): query = query.filter(Expense.status == filters["status"])
     if filters.get("month"): query = query.filter(extract('month', Expense.application_date) == filters["month"])
     if filters.get("year"): query = query.filter(extract('year', Expense.application_date) == filters["year"])
-    if filters.get("account_id"): query = query.filter(Expense.account_id == filters["account_id"])
+    if filters.get("account_id"):
+        acc_id = filters["account_id"]
+        query = query.filter(or_(Expense.account_id == acc_id, Expense.destination_account_id == acc_id))
     if filters.get("category_id"): query = query.filter(Expense.category_id == filters["category_id"])
     if filters.get("recipient_id"): query = query.filter(Expense.recipient_id == filters["recipient_id"])
     if filters.get("start_date"): query = query.filter(Expense.date >= filters["start_date"])
@@ -507,4 +512,68 @@ def delete_budget(db: Session, budget_id: int, tenant_id: int):
         db.commit()
         return True
     return False
+
+
+def get_accounts_with_balances(db: Session, tenant_id: int):
+    accounts = db.query(Account).filter(Account.tenant_id == tenant_id).order_by(Account.name.asc()).all()
+    expenses = db.query(Expense).filter(
+        Expense.tenant_id == tenant_id,
+        Expense.status == "completed"
+    ).all()
+
+    incomes = {}
+    expenses_map = {}
+    transfers_out = {}
+    transfers_in = {}
+
+    for e in expenses:
+        if e.movement_type == "income" and e.account_id:
+            incomes[e.account_id] = incomes.get(e.account_id, 0.0) + (e.amount or 0.0)
+        elif e.movement_type == "expense" and e.account_id:
+            expenses_map[e.account_id] = expenses_map.get(e.account_id, 0.0) + (e.amount or 0.0)
+        elif e.movement_type == "transfer":
+            if e.account_id:
+                transfers_out[e.account_id] = transfers_out.get(e.account_id, 0.0) + (e.amount or 0.0)
+            if e.destination_account_id:
+                transfers_in[e.destination_account_id] = transfers_in.get(e.destination_account_id, 0.0) + (e.amount or 0.0)
+
+    result = []
+    total_available_liquidity = 0.0
+    total_credit_debt = 0.0
+
+    for acc in accounts:
+        acc_initial = float(acc.initial_balance or 0.0)
+        acc_inc = incomes.get(acc.id, 0.0)
+        acc_exp = expenses_map.get(acc.id, 0.0)
+        acc_tout = transfers_out.get(acc.id, 0.0)
+        acc_tin = transfers_in.get(acc.id, 0.0)
+
+        current_bal = round(acc_initial + acc_inc - acc_exp - acc_tout + acc_tin, 2)
+        is_overdrawn = current_bal < 0
+
+        if not acc.is_credit_card:
+            total_available_liquidity += current_bal
+        else:
+            if current_bal < 0:
+                total_credit_debt += abs(current_bal)
+
+        result.append({
+            "id": acc.id,
+            "name": acc.name,
+            "is_credit_card": acc.is_credit_card,
+            "initial_balance": acc_initial,
+            "tenant_id": acc.tenant_id,
+            "current_balance": current_bal,
+            "total_incomes": round(acc_inc, 2),
+            "total_expenses": round(acc_exp, 2),
+            "total_transfers_in": round(acc_tin, 2),
+            "total_transfers_out": round(acc_tout, 2),
+            "is_overdrawn": is_overdrawn
+        })
+
+    return {
+        "accounts": result,
+        "total_available_liquidity": round(total_available_liquidity, 2),
+        "total_credit_debt": round(total_credit_debt, 2)
+    }
 

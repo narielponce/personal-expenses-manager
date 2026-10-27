@@ -96,6 +96,68 @@
       </div>
     </div>
 
+    <!-- Cuentas y Saldos Widget -->
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-2">
+      <div class="d-flex justify-content-center pt-2 pb-1">
+        <div class="drag-handle"></div>
+      </div>
+      <div class="card-body p-3 pt-1">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <span class="tiny text-muted fw-bold text-uppercase">Mis Cuentas</span>
+          <router-link to="/accounts" class="text-decoration-none tiny fw-bold text-primary">
+            Gestionar <i class="bi bi-chevron-right" style="font-size: 0.65rem;"></i>
+          </router-link>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-baseline mb-2">
+          <div>
+            <span class="tiny text-muted d-block text-uppercase" style="font-size: 0.6rem;">Disponible Líquido</span>
+            <h4 class="fw-bold mb-0" :class="totalLiquidity < 0 ? 'text-danger' : 'text-dark'">
+              {{ formatCurrency(totalLiquidity) }}
+            </h4>
+          </div>
+          <div v-if="hasOverdrawnAccount" class="text-end">
+            <span class="badge bg-danger text-white tiny px-2 py-1">
+              <i class="bi bi-exclamation-circle-fill me-1"></i>En Descubierto
+            </span>
+          </div>
+          <div v-else-if="totalCreditDebt > 0" class="text-end">
+            <span class="tiny text-muted d-block text-uppercase" style="font-size: 0.6rem;">Deuda Tarjetas</span>
+            <span class="smaller fw-bold text-danger">{{ formatCurrency(totalCreditDebt) }}</span>
+          </div>
+        </div>
+
+        <!-- Scroll horizontal de cuentas -->
+        <div v-if="accountsWithBalances.length > 0" class="d-flex gap-2 overflow-auto pb-1" style="scrollbar-width: thin;">
+          <div 
+            v-for="acc in accountsWithBalances" 
+            :key="acc.id"
+            class="p-2 rounded-3 border bg-light flex-shrink-0"
+            style="min-width: 130px; max-width: 160px;"
+          >
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <span class="tiny text-truncate fw-bold text-dark d-block" :title="acc.name" style="max-width: 100px;">
+                {{ acc.name }}
+              </span>
+              <i class="bi" :class="acc.is_credit_card ? 'bi-credit-card tiny text-primary' : 'bi-bank tiny text-muted'"></i>
+            </div>
+            <div 
+              class="smaller fw-bold text-truncate"
+              :class="acc.is_overdrawn ? 'text-danger' : 'text-dark'"
+            >
+              {{ formatCurrency(acc.current_balance) }}
+            </div>
+            <span v-if="acc.is_overdrawn && !acc.is_credit_card" class="badge bg-danger text-white p-0 px-1 mt-1" style="font-size: 0.55rem;">
+              Descubierto
+            </span>
+            <span v-else-if="acc.is_credit_card" class="tiny text-muted d-block" style="font-size: 0.58rem;">
+              Tarjeta
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Monthly Summary -->
     <div class="card border-0 bg-primary text-white rounded-4 shadow-sm p-3 mb-2">
       <div class="d-flex justify-content-between align-items-center">
@@ -313,12 +375,14 @@ import { onMounted, computed, ref } from 'vue';
 import { useExpenseStore } from '../stores/expense';
 import { useAuthStore } from '../stores/auth';
 import { useAnalyticsStore } from '../stores/analytics';
+import { useAccountStore } from '../stores/account';
 import apiClient from '../api';
 import { useRouter } from 'vue-router';
 
 const expenseStore = useExpenseStore();
 const authStore = useAuthStore();
 const analyticsStore = useAnalyticsStore();
+const accountStore = useAccountStore();
 const router = useRouter();
 
 const expenses = computed(() => expenseStore.expenses);
@@ -328,6 +392,11 @@ const advisorData = computed(() => analyticsStore.advisor);
 const loadingAdvisor = computed(() => analyticsStore.loadingAdvisor);
 const loadingSimulation = computed(() => analyticsStore.loadingSimulation);
 const simulationResult = computed(() => analyticsStore.simulationResult);
+
+const accountsWithBalances = computed(() => accountStore.accountsWithBalances);
+const totalLiquidity = computed(() => accountStore.totalLiquidity);
+const totalCreditDebt = computed(() => accountStore.totalCreditDebt);
+const hasOverdrawnAccount = computed(() => accountsWithBalances.value.some(a => a.is_overdrawn && !a.is_credit_card));
 
 const userName = computed(() => {
   if (authStore.user && authStore.user.email) {
@@ -561,6 +630,7 @@ const handlePhotoCapture = async (event) => {
 onMounted(async () => {
   await expenseStore.fetchExpenses(0, 50);
   await analyticsStore.fetchSummary();
+  await accountStore.fetchAccountsWithBalances();
 });
 </script>
 

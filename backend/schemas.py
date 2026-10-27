@@ -64,6 +64,7 @@ class CategoryUpdate(CategoryBase):
 class AccountBase(BaseModel):
     name: str
     is_credit_card: Optional[bool] = False
+    initial_balance: Optional[float] = 0.0
 
 class AccountCreate(AccountBase):
     pass
@@ -75,9 +76,24 @@ class Account(AccountBase):
     class Config:
         from_attributes = True
 
-class AccountUpdate(AccountBase):
+class AccountUpdate(BaseModel):
     name: Optional[str] = None
     is_credit_card: Optional[bool] = None
+    initial_balance: Optional[float] = None
+
+class AccountWithBalance(Account):
+    current_balance: float = 0.0
+    total_incomes: float = 0.0
+    total_expenses: float = 0.0
+    total_transfers_in: float = 0.0
+    total_transfers_out: float = 0.0
+    is_overdrawn: bool = False
+
+class AccountBalanceSummary(BaseModel):
+    accounts: List[AccountWithBalance]
+    total_available_liquidity: float = 0.0
+    total_credit_debt: float = 0.0
+
 
 # Recipient Schemas
 class RecipientBase(BaseModel):
@@ -112,6 +128,7 @@ class ExpenseBase(BaseModel):
     is_recurring: Optional[bool] = False
     payment_method: Optional[str] = None
     installments: Optional[int] = 1
+    destination_account_id: Optional[int] = None
 
 
 class ExpenseCreate(ExpenseBase):
@@ -134,6 +151,7 @@ class ExpenseUpdate(BaseModel):
     movement_type: Optional[str] = None
     category_id: Optional[int] = None
     account_id: Optional[int] = None
+    destination_account_id: Optional[int] = None
     recipient_id: Optional[int] = None
     is_installment: Optional[bool] = None
     num_installments: Optional[int] = None

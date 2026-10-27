@@ -11,9 +11,10 @@ class Expense(Base):
     amount = Column(Float, nullable=False)
     date = Column(Date, nullable=False)
     application_date = Column(Date, nullable=False, default=datetime.utcnow)
-    movement_type = Column(String, nullable=False) # 'income' or 'expense'
+    movement_type = Column(String, nullable=False) # 'income', 'expense', or 'transfer'
     category_id = Column(Integer, ForeignKey("categories.id"), nullable=True)
     account_id = Column(Integer, ForeignKey("accounts.id"), nullable=True)
+    destination_account_id = Column(Integer, ForeignKey("accounts.id"), nullable=True)
     recipient_id = Column(Integer, ForeignKey("recipients.id"), nullable=True)
     is_installment = Column(Boolean, default=False)
     num_installments = Column(Integer, nullable=True)
@@ -28,5 +29,6 @@ class Expense(Base):
     owner = relationship("User")
     tenant = relationship("Tenant")
     category = relationship("Category")
-    account = relationship("Account")
+    account = relationship("Account", foreign_keys=[account_id])
+    destination_account = relationship("Account", foreign_keys=[destination_account_id])
     recipient = relationship("Recipient")

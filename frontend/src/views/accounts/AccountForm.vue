@@ -34,6 +34,28 @@
             />
           </div>
 
+          <div class="mb-3">
+            <label for="initialBalance" class="form-label tiny text-muted fw-bold mb-1 text-uppercase">
+              Saldo Inicial ($)
+            </label>
+            <div class="input-group input-group-sm">
+              <span class="input-group-text border-0 bg-light rounded-start-3">$</span>
+              <input 
+                type="number" 
+                step="0.01" 
+                class="form-control border-0 bg-light rounded-end-3 py-2 px-2" 
+                id="initialBalance" 
+                v-model.number="account.initial_balance" 
+                placeholder="0.00" 
+              />
+            </div>
+            <div class="mt-1 px-1">
+              <p class="text-muted italic mb-0" style="font-size: 0.65rem;">
+                * Puede ser negativo si la cuenta tiene descubierto o sobregiro autorizado.
+              </p>
+            </div>
+          </div>
+
           <div class="mb-4">
             <div class="form-check form-switch d-flex align-items-center gap-2 ps-0 bg-light p-2 rounded-3">
               <label class="form-check-label tiny text-muted fw-bold mb-0 text-uppercase flex-grow-1 ms-2" for="isCreditCard">
@@ -91,6 +113,7 @@ const isEditMode = computed(() => !props.isModalCreate && route.params.id !== un
 const account = ref({
   name: '',
   is_credit_card: false,
+  initial_balance: 0.0,
 });
 
 const loading = computed(() => accountStore.loading);

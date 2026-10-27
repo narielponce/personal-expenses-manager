@@ -4,6 +4,9 @@ import apiClient from '../api';
 export const useAccountStore = defineStore('account', {
   state: () => ({
     accounts: [],
+    accountsWithBalances: [],
+    totalLiquidity: 0,
+    totalCreditDebt: 0,
     loading: false,
     error: null,
   }),
@@ -17,6 +20,23 @@ export const useAccountStore = defineStore('account', {
       } catch (error) {
         this.error = error;
         console.error('Error fetching accounts:', error);
+      } finally {
+        this.loading = false;
+      }
+    },
+    async fetchAccountsWithBalances() {
+      this.loading = true;
+      this.error = null;
+      try {
+        const response = await apiClient.get('/accounts/balances');
+        this.accountsWithBalances = response.data.accounts || [];
+        this.totalLiquidity = response.data.total_available_liquidity || 0;
+        this.totalCreditDebt = response.data.total_credit_debt || 0;
+        this.accounts = response.data.accounts || [];
+        return response.data;
+      } catch (error) {
+        this.error = error;
+        console.error('Error fetching accounts with balances:', error);
       } finally {
         this.loading = false;
       }

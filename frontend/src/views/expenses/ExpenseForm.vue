@@ -33,6 +33,7 @@
               <select class="form-select form-select-sm border-0 bg-light rounded-3 px-1" id="movementType" v-model="expense.movement_type" required>
                 <option value="expense">Gasto</option>
                 <option value="income">Ingreso</option>
+                <option value="transfer">Transferencia</option>
               </select>
             </div>
             <div class="col-4">
@@ -47,18 +48,21 @@
           <!-- Sección: Cuenta y Pago -->
           <div class="mb-2 bg-light rounded-4 overflow-hidden">
             <button type="button" class="btn btn-light w-100 text-start d-flex justify-content-between align-items-center py-2 px-3 bg-transparent border-0" @click="showAccount = !showAccount">
-                <span class="fw-bold text-dark smaller">Cuenta y Pago</span>
+                <span class="fw-bold text-dark smaller">{{ expense.movement_type === 'transfer' ? 'Cuentas de Transferencia' : 'Cuenta y Pago' }}</span>
                 <i class="bi text-muted smaller" :class="showAccount ? 'bi-chevron-down' : 'bi-chevron-right'"></i>
             </button>
 
             <div v-show="showAccount" class="p-3 pt-0">
+              <!-- Cuenta Origen -->
               <div class="row g-2 mb-2 align-items-center">
                 <div class="col-4">
-                  <label for="accountId" class="form-label mb-0 tiny text-muted fw-bold text-uppercase">Cuenta:</label>
+                  <label for="accountId" class="form-label mb-0 tiny text-muted fw-bold text-uppercase">
+                    {{ expense.movement_type === 'transfer' ? 'Origen:' : 'Cuenta:' }}
+                  </label>
                 </div>
                 <div class="col-8">
                   <div class="input-group input-group-sm">
-                    <select class="form-select border-0 bg-white rounded-start-3 py-1" id="accountId" v-model="expense.account_id">
+                    <select class="form-select border-0 bg-white rounded-start-3 py-1" id="accountId" v-model="expense.account_id" :required="expense.movement_type === 'transfer'">
                       <option :value="null">Seleccionar...</option>
                       <option v-for="account in accounts" :key="account.id" :value="account.id">{{ account.name }}</option>
                     </select>
@@ -69,7 +73,28 @@
                 </div>
               </div>
 
-              <div v-if="selectedAccountIsCreditCard" class="row g-2 align-items-center mb-2">
+              <!-- Cuenta Destino (solo para Transferencia) -->
+              <div v-if="expense.movement_type === 'transfer'" class="row g-2 mb-2 align-items-center">
+                <div class="col-4">
+                  <label for="destinationAccountId" class="form-label mb-0 tiny text-muted fw-bold text-uppercase">Destino:</label>
+                </div>
+                <div class="col-8">
+                  <div class="input-group input-group-sm">
+                    <select class="form-select border-0 bg-white rounded-start-3 py-1" id="destinationAccountId" v-model="expense.destination_account_id" required>
+                      <option :value="null">Seleccionar...</option>
+                      <option v-for="account in accounts" :key="account.id" :value="account.id" :disabled="account.id === expense.account_id">
+                        {{ account.name }} {{ account.id === expense.account_id ? '(Misma cuenta)' : '' }}
+                      </option>
+                    </select>
+                    <button class="btn btn-white border-0 bg-white rounded-end-3 py-1" type="button" data-bs-toggle="modal" data-bs-target="#accountModal">
+                      <i class="bi bi-plus-circle text-primary"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Cuotas (solo si es tarjeta y NO es transferencia) -->
+              <div v-if="selectedAccountIsCreditCard && expense.movement_type !== 'transfer'" class="row g-2 align-items-center mb-2">
                 <div class="col-4">
                   <label for="numInstallments" class="form-label mb-0 tiny text-muted fw-bold text-uppercase">Cuotas:</label>
                 </div>
@@ -83,8 +108,8 @@
                 </div>
               </div>
 
-              <!-- Medio de Pago -->
-              <div class="row g-2 mb-2 align-items-center">
+              <!-- Medio de Pago (si no es transferencia) -->
+              <div v-if="expense.movement_type !== 'transfer'" class="row g-2 mb-2 align-items-center">
                 <div class="col-4">
                   <label for="paymentMethod" class="form-label mb-0 tiny text-muted fw-bold text-uppercase">Medio Pago:</label>
                 </div>
@@ -101,8 +126,8 @@
                 </div>
               </div>
 
-              <!-- Gasto Recurrente / Fijo -->
-              <div class="row g-2 align-items-center">
+              <!-- Gasto Recurrente / Fijo (si no es transferencia) -->
+              <div v-if="expense.movement_type !== 'transfer'" class="row g-2 align-items-center">
                 <div class="col-4">
                   <label class="form-label mb-0 tiny text-muted fw-bold text-uppercase">Recurrente:</label>
                 </div>
@@ -125,7 +150,8 @@
 
             <div v-show="showDetails" class="p-3 pt-0">
               
-              <div class="row g-2 mb-2 align-items-center">
+              <!-- Categoría (oculta en transferencias ya que no aplica) -->
+              <div v-if="expense.movement_type !== 'transfer'" class="row g-2 mb-2 align-items-center">
                 <div class="col-4">
                   <label for="categoryId" class="form-label mb-0 tiny text-muted fw-bold text-uppercase">Categoría:</label>
                 </div>
@@ -164,7 +190,14 @@
                   <label for="description" class="form-label mb-0 tiny text-muted fw-bold text-uppercase">Detalle:</label>
                 </div>
                 <div class="col-8">
-                  <input type="text" class="form-control form-control-sm border-0 bg-white rounded-3 py-1" id="description" v-model="expense.description" placeholder="Ej: Compra super" required />
+                  <input 
+                    type="text" 
+                    class="form-control form-control-sm border-0 bg-white rounded-3 py-1" 
+                    id="description" 
+                    v-model="expense.description" 
+                    :placeholder="expense.movement_type === 'transfer' ? 'Opcional (Ej: Pago tarjeta)' : 'Ej: Compra super'" 
+                    :required="expense.movement_type !== 'transfer'" 
+                  />
                 </div>
               </div>
             </div>
@@ -277,6 +310,7 @@ const expense = ref({
   movement_type: 'expense',
   category_id: null,
   account_id: null,
+  destination_account_id: null,
   recipient_id: null,
   is_installment: false,
   num_installments: null,
@@ -324,7 +358,7 @@ watch(() => expense.value.account_id, (newVal) => {
 });
 
 watch(selectedAccountIsCreditCard, (newVal) => {
-  if (newVal) {
+  if (newVal && expense.value.movement_type !== 'transfer') {
     expense.value.is_installment = true;
     if (!expense.value.num_installments) {
       expense.value.num_installments = 1; 
@@ -338,6 +372,15 @@ watch(selectedAccountIsCreditCard, (newVal) => {
   }
 });
 
+watch(() => expense.value.movement_type, (newType) => {
+  if (newType === 'transfer') {
+    expense.value.is_installment = false;
+    expense.value.num_installments = null;
+    expense.value.is_recurring = false;
+    showAccount.value = true;
+  }
+});
+
 onMounted(async () => {
   // Asegurar que el usuario esté cargado
   if (!authStore.user) {
@@ -347,6 +390,14 @@ onMounted(async () => {
   await categoryStore.fetchCategories();
   await accountStore.fetchAccounts();
   await recipientStore.fetchRecipients();
+
+  if (route.query.type === 'transfer') {
+    expense.value.movement_type = 'transfer';
+    showAccount.value = true;
+    if (route.query.account_id) {
+      expense.value.account_id = parseInt(route.query.account_id);
+    }
+  }
 
   if (isEditMode.value) {
     const expenseId = parseInt(route.params.id);
@@ -380,6 +431,7 @@ const resetForm = () => {
     movement_type: 'expense',
     category_id: null,
     account_id: null,
+    destination_account_id: null,
     recipient_id: null,
     is_installment: false,
     num_installments: null,
@@ -393,6 +445,23 @@ const resetForm = () => {
 
 const handleSubmit = async () => {
   try {
+    if (expense.value.movement_type === 'transfer') {
+      if (!expense.value.account_id || !expense.value.destination_account_id) {
+        alert('Debes seleccionar tanto la cuenta de origen como la de destino.');
+        return;
+      }
+      if (expense.value.account_id === expense.value.destination_account_id) {
+        alert('La cuenta de origen y destino no pueden ser la misma.');
+        return;
+      }
+      if (!expense.value.description) {
+        const src = accounts.value.find(a => a.id === expense.value.account_id)?.name || 'Origen';
+        const dst = accounts.value.find(a => a.id === expense.value.destination_account_id)?.name || 'Destino';
+        expense.value.description = `Transferencia: ${src} ➔ ${dst}`;
+      }
+      expense.value.payment_method = 'Transferencia';
+    }
+
     // Remove derived/internal fields that are not in the backend schemas
     const { id, user_id, tenant_id, installment_amount, ...payload } = expense.value;
     
@@ -404,6 +473,9 @@ const handleSubmit = async () => {
     } else {
       await expenseStore.createExpense(payload);
     }
+    // Refresh account balances
+    await accountStore.fetchAccountsWithBalances();
+
     if (isEditMode.value) {
       // Redirect back to where we came from or default to expenses
       const redirectTo = expense.value.status === 'pending' || route.query.from === 'inbox' ? '/inbox' : '/expenses';

@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
 
-from schemas import AccountCreate, Account as AccountSchema, AccountUpdate
+from schemas import AccountCreate, Account as AccountSchema, AccountUpdate, AccountBalanceSummary, AccountWithBalance
 from models.user import User
 from models.account import Account # Import SQLAlchemy model
 import crud
@@ -30,6 +30,13 @@ def read_accounts(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)
     accounts = crud.get_accounts_by_tenant(db, tenant_id=current_user.tenant_id, skip=skip, limit=limit)
     return accounts
 
+@router.get("/accounts/balances", response_model=AccountBalanceSummary)
+def read_accounts_with_balances(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    return crud.get_accounts_with_balances(db, tenant_id=current_user.tenant_id)
+
 @router.get("/accounts/{account_id}", response_model=AccountSchema)
 def read_account(account_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     db_account = crud.get_account(db, account_id=account_id, tenant_id=current_user.tenant_id)
@@ -39,7 +46,7 @@ def read_account(account_id: int, db: Session = Depends(get_db), current_user: U
 
 @router.put("/accounts/{account_id}", response_model=AccountSchema)
 def update_account(
-    account_id: int, account: AccountCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)
+    account_id: int, account: AccountUpdate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)
 ):
     db_account = crud.update_account(db, account_id=account_id, account=account, tenant_id=current_user.tenant_id)
     if db_account is None:
