@@ -80,7 +80,7 @@
                       <span class="tiny text-muted text-nowrap">
                         <i class="bi bi-calendar3 me-1"></i>{{ formatDate(item.date) }}
                       </span>
-                      <span class="fw-bold text-danger tiny">
+                      <span class="fw-bold text-danger card-amount">
                         {{ formatCurrency(item.amount) }}
                       </span>
                     </div>
@@ -234,6 +234,28 @@ onMounted(async () => {
 
 .tiny {
   font-size: 0.65rem;
+}
+
+.card-amount {
+  font-size: 0.75rem;
+}
+
+@media (min-width: 768px) {
+  .smaller {
+    font-size: 0.95rem;
+  }
+  .tiny {
+    font-size: 0.85rem;
+  }
+  .card-amount {
+    font-size: 1.05rem;
+  }
+  .user-header h5 {
+    font-size: 1.35rem;
+  }
+  .user-header p {
+    font-size: 0.85rem !important;
+  }
 }
 
 .min-width-0 {

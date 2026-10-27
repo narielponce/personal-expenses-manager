@@ -107,4 +107,14 @@ watch(() => authStore.token, (newToken) => {
 #app {
   min-height: 100vh;
 }
+
+/* Escalado de tipografía para versión de escritorio */
+@media (min-width: 768px) {
+  .user-header h5 {
+    font-size: 1.35rem;
+  }
+  .user-header p {
+    font-size: 0.85rem !important;
+  }
+}
 </style>

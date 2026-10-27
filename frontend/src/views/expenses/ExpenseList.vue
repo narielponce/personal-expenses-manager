@@ -112,7 +112,7 @@
 
                     <div class="d-flex align-items-center gap-2">
                       <!-- Importe -->
-                      <span class="fw-bold tiny me-1" :class="expense.movement_type === 'expense' ? 'text-danger' : 'text-success'">
+                      <span class="fw-bold expense-amount me-1" :class="expense.movement_type === 'expense' ? 'text-danger' : 'text-success'">
                         {{ expense.movement_type === 'expense' ? '-' : '+' }}{{ formatCurrency(expense.amount) }}
                       </span>
                       
@@ -348,6 +348,35 @@ const deleteExpense = async (id) => {
 
 .tiny {
   font-size: 0.65rem;
+}
+
+.expense-amount {
+  font-size: 0.75rem;
+}
+
+@media (min-width: 768px) {
+  .smaller {
+    font-size: 0.95rem;
+  }
+  .tiny {
+    font-size: 0.85rem;
+  }
+  .expense-amount {
+    font-size: 1.05rem;
+  }
+  .inbox-icon {
+    width: 36px !important;
+    height: 36px !important;
+  }
+  .inbox-icon i {
+    font-size: 0.9rem !important;
+  }
+  .user-header h5 {
+    font-size: 1.35rem;
+  }
+  .user-header p {
+    font-size: 0.85rem !important;
+  }
 }
 
 .min-width-0 {

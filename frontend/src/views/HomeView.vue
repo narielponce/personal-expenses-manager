@@ -635,6 +635,12 @@ onMounted(async () => {
   height: 32px;
 }
 
+.home-container {
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
 .smaller {
   font-size: 0.75rem;
 }
@@ -645,6 +651,37 @@ onMounted(async () => {
 
 .tiny-sub {
   font-size: 0.6rem;
+}
+
+@media (min-width: 768px) {
+  .smaller {
+    font-size: 0.95rem;
+  }
+  .tiny {
+    font-size: 0.85rem;
+  }
+  .tiny-sub {
+    font-size: 0.75rem;
+  }
+  .inbox-item p.tiny {
+    font-size: 0.95rem !important;
+  }
+  .inbox-item p.tiny-sub {
+    font-size: 0.8rem !important;
+  }
+  .inbox-icon {
+    width: 38px;
+    height: 38px;
+  }
+  .inbox-icon i {
+    font-size: 1rem !important;
+  }
+  .user-header h5 {
+    font-size: 1.35rem;
+  }
+  .user-header p {
+    font-size: 0.85rem !important;
+  }
 }
 
 .min-width-0 {
